@@ -11,7 +11,8 @@ mkdir -p "$CLIENT_DATA_DIR"
 if ls "$DATA_DIR"/*.pk3 >/dev/null 2>&1; then
   if [ ! -f "$CLIENT_DATA_DIR/jka-mp.pk3" ] || [ -n "$(find "$DATA_DIR" -name '*.pk3' -newer "$CLIENT_DATA_DIR/jka-mp.pk3")" ]; then
     echo "building client pk3..."
-    python3 /opt/gateway/repack.py "$DATA_DIR" "$CLIENT_DATA_DIR/jka-mp.pk3"
+    # a broken/partial upload must not take the whole machine down
+    python3 /opt/gateway/repack.py "$DATA_DIR" "$CLIENT_DATA_DIR/jka-mp.pk3" || echo "client pk3 build failed (incomplete game data?)" >&2
   fi
 fi
 export CLIENT_DATA_DIR
