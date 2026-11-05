@@ -97,7 +97,7 @@ podman run --rm -p 8080:8080 -e JKA_PASSWORD=secret -v ./data:/data:Z jka-mp
 |---|---|
 | App | `jka-web-ffa` |
 | Region | `fra` |
-| Machine | `shared-cpu-2x`, 4 GB, for ~4 players |
+| Machine | `shared-cpu-1x`, 2 GB. Measured with 3 players: 2–3% CPU, 380 MB RAM |
 | Volume | 3 GB `jka_data` mounted at `/data` |
 | Idle behaviour | Sleeps when nobody is connected (`auto_stop_machines = "stop"`), wakes up on the next request |
 

@@ -31,5 +31,5 @@ primary_region = "fra"
   destination = "/data"
 
 [[vm]]
-  size = "shared-cpu-2x"   # ~4 players, fast client pk3 rebuild at start
-  memory = "4gb"
+  size = "shared-cpu-1x"   # ~4 players use <10% CPU
+  memory = "2gb"

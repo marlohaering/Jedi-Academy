@@ -15,7 +15,7 @@ This repo has two parts:
 | `web/engine-mp/web-rename/` | `gen_rename.py` and the generated `{cgame,ui,renderer}.h` symbol-prefix headers |
 | `web/server/` | `gateway.py` (login, static files, WebSocket⇄UDP bridge), `repack.py` (slim client pk3), `start.sh`, `server.cfg`, `Dockerfile` |
 | `web/shell-mp/` | MP game page (pk3 download + Cache Storage, auto-connect) |
-| `web/fly.toml` | fly.io app `jka-web-ffa` (fra, shared-cpu-2x, 4 GB, volume `jka_data` on `/data`, auto-stop) |
+| `web/fly.toml` | fly.io app `jka-web-ffa` (fra, shared-cpu-1x, 2 GB, volume `jka_data` on `/data`, auto-stop) |
 | `web/engine/`, `web/assets/`, `web/shell/` | SP demo: StaticJK engine + generated placeholder assets (`assets/gen/*.py`) |
 | `web/data/base/` | Original `assets0-3.pk3` (1.2 GB). **Git-ignored, never commit or publish** |
 
@@ -70,4 +70,9 @@ podman run --rm -p 8080:8080 -e JKA_PASSWORD=secret -v ./data:/data:Z jka-mp
   `sv_pure 0` (clients use the repacked pk3).
 - Changing the map: edit `server.cfg`, and also the `map=` and `music=` arguments of `repack.py` in
   `start.sh`.
+- Performance: the client spends ~11 ms/frame (laptop iGPU, 60 fps), mostly in Regal's per-vertex
+  emulation (`R_ArrayElementDiscrete`). `r_primitives 2` (glDrawElements) would take ~2.6 ms, but it
+  renders a black screen under Regal. Fixing it is the main client-side optimisation left.
+- Measured from Hamburg: ~23 ms WebSocket game-path RTT (edge `ams` → machine `fra`), ~230 Mbit/s pk3
+  download. `sv_fps 40` keeps the added snapshot latency low.
 - Ask the user before installing SDKs, packages or system tools.
