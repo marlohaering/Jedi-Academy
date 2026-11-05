@@ -27,9 +27,8 @@ players.
 - **Orientation:** landscape only. Portrait shows a "rotate your phone" screen.
 - **Install form:** a PWA (manifest, standalone display) that also works as a plain tab.
 - **"Playable" means:**
-  - The Pixel 9a runs at ≥ 45 fps (≤ 22 ms/frame) at the chosen render resolution. The 9a is faster
-    than the actual target device, a mid-range phone from about 2022 (≥ 30 fps). That target is checked
-    indirectly, by a reduced-resolution test on the 9a or one run on a device farm before release.
+  - Frame rate: no fixed target, because render-path work is out of scope (see "Rendering and
+    performance"). Frame time on the Pixel 9a is measured and recorded in every phase.
   - First load ≤ 60 s on 4G. Later loads come from the cache.
   - A player can join, move, aim, fight with the saber, use force powers and chat.
   - A 10-minute match runs without a crash and without bad thermal throttling.
@@ -77,14 +76,14 @@ override it, so mobile mode can be tested on desktop too.
   It uses `r_mode -1` with `r_customwidth` and `r_customheight`, set once at start, since landscape is
   locked.
 - `com_maxfps 30` by default, with an option for 60, to limit heat and battery drain.
-- **Phase 0 is measure first.** Profile on the Pixel 9a, then fix the draw path. Making `r_primitives 2`
-  (glDrawElements) render correctly under Regal would take the frame time from ≈11 to ≈2.6 ms on the
-  laptop. Desktop benefits too.
-- Fallbacks if that fails, in order:
-  1. A small direct WebGL backend for the rd-vanilla tessellator (`RB_StageIteratorGeneric` and
-     friends). The hot path calls only a few draw functions. Regal stays only for the rest.
-  2. Replace Regal with gl4es.
-  3. Lower the bar to ≥ 20 fps. This needs the owner's explicit sign-off.
+- **Render-path work is out of scope** (decided 2026-11-06, P0 dropped). Regal and the current draw
+  path stay as they are. Resolution and `com_maxfps` are the only performance levers.
+- If the frame rate turns out to be unplayable, possible later work, in order:
+  1. Make `r_primitives 2` (glDrawElements) render correctly under Regal. On the laptop that takes the
+     frame time from ≈11 to ≈2.6 ms. Desktop benefits too.
+  2. A small direct WebGL backend for the rd-vanilla tessellator (`RB_StageIteratorGeneric` and
+     friends).
+  3. Replace Regal with gl4es.
 
 ### Input
 
@@ -128,20 +127,20 @@ override it, so mobile mode can be tested on desktop too.
 
 ## Phases
 
-Every phase is deployed and tested on the Pixel 9a. P0 and P1 are independent and can run in parallel.
+Every phase is deployed and tested on the Pixel 9a. There is no P0: render-path work was dropped, and
+its cheap part (resolution, frame cap) moved into P1.
 
 | Phase | Content | Done when |
 |---|---|---|
-| **P0** Render path | Profile on the 9a. Fix `r_primitives 2` or the tessellator path. Mobile resolution and `com_maxfps` | ≤ 22 ms/frame on the 9a on `mp/ffa3` |
-| **P1** Memory | No double copy. Hunk size and memory cap. `repack.py --mobile`. Manifest variant | Loads and runs on the 9a (still without controls). Pk3 ≤ 200 MB. Tab memory measured |
+| **P1** Memory and resolution | No double copy. Hunk size and memory cap. `repack.py --mobile`. Manifest variant. Mobile resolution and `com_maxfps` | Loads and runs on the 9a (still without controls). Pk3 ≤ 200 MB. Tab memory and frame time measured |
 | **P2** Input | C API `web_move` / `web_look` / `web_key`. Touch overlay layout v1. Gamepad API | Move, aim, attack, jump, force and weapon all work by touch and gamepad |
 | **P3** Menus and chat | Auto `team free`. HTML pause menu. Quick-chat and keyboard chat | A full match from join to disconnect without the original menus |
 | **P4** PWA and polish | Manifest, persistent storage, wake lock, orientation screen, audio unlock, settings | Acceptance bar met. iOS pass on a real device |
 
 ## Open risks
 
-- **Draw path:** if neither `r_primitives 2` nor the tessellator backend reaches the frame budget, P0
-  grows into a larger renderer project.
+- **Frame rate:** with the render path out of scope, the game may run but be too slow to play
+  comfortably. P1 measures this early on the 9a.
 - **Memory headroom:** GrapheneOS's hardened malloc and each browser's per-tab limit are unknown. P1
   measures them.
 - **iOS:** WebKit memory limits and WebGL quirks stay untested until the release pass.
