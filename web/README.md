@@ -45,6 +45,9 @@ Browser                                  fly.io machine (jka-web-ffa, fra)
   browsers at container start. It leaves out cinematics, non-English dialogue, every map except ffa3 and
   single-player music. The browser keeps it in Cache Storage, so it is only downloaded once. The server
   itself uses the original pk3s (`sv_pure 0`).
+* **Phones** get `jka-mp-mobile.pk3` (≈130 MB: only what ffa3 needs, images ≤ 256 px), built in the
+  background at container start (`repack.py … profile=mobile`). Phones run at a smaller resolution and
+  30 fps. `?mobile` / `?desktop` force the mode. See [`MOBILE.md`](MOBILE.md).
 
 ### Browser port of the MP client (`engine-mp/`)
 
@@ -127,7 +130,7 @@ fly logs                                      # server log: connects, team chang
 * First visit: the browser downloads ≈780 MB once. Later visits load from the browser cache.
 * Performance, measured on a laptop with Intel iGPU in Chrome: 60 fps with ~6 ms engine time per frame.
   With software rendering (no GPU): ~29 fps. From Hamburg the game round trip to fra is ~22 ms.
-* Phones are not supported yet. [`MOBILE.md`](MOBILE.md) has the agreed concept and phases.
+* Phones load and render, but have no touch controls yet. [`MOBILE.md`](MOBILE.md) has the concept and phases.
 
 ---
 

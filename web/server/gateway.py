@@ -13,6 +13,7 @@ Environment:
   GAME_HOST/PORT dedicated server address (default 127.0.0.1:29070)
   WEB_DIR        client files (index.html, openjk_mp.js/.wasm)
   CLIENT_DATA_DIR directory holding the (repacked) client pk3 files served under /base/
+                 (*-mobile.pk3: phone variant, listed separately in the manifest)
   PORT           HTTP listen port (default 8080)
 """
 import asyncio
@@ -101,18 +102,21 @@ async def healthz(request):
     return web.Response(text='ok')
 
 
-def pak_list():
+def pak_list(mobile):
+    """client pk3s; *-mobile.pk3 is the phone variant (web/MOBILE.md), the rest is for desktop"""
     out = []
     if os.path.isdir(DATA_DIR):
         for name in sorted(os.listdir(DATA_DIR)):
-            if name.lower().endswith('.pk3'):
+            low = name.lower()
+            if low.endswith('.pk3') and low.endswith('-mobile.pk3') == mobile:
                 st = os.stat(os.path.join(DATA_DIR, name))
                 out.append({'name': name, 'size': st.st_size, 'version': f'{st.st_size:x}-{int(st.st_mtime):x}'})
     return out
 
 
 async def manifest(request):
-    return web.json_response({'paks': pak_list()}, headers={'Cache-Control': 'no-cache'})
+    return web.json_response({'paks': pak_list(False), 'mobile': pak_list(True)},
+                             headers={'Cache-Control': 'no-cache'})
 
 
 async def pak(request):

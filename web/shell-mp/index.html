@@ -54,6 +54,9 @@
   const params = new URLSearchParams(location.search);
   const CACHE = 'jka-paks-v1';
   const lines = [];
+  // Phones get their own slim pk3, resolution and frame cap (web/MOBILE.md). ?mobile / ?desktop override.
+  const MOBILE = params.has('mobile') ? true : params.has('desktop') ? false
+    : matchMedia('(pointer: coarse)').matches && navigator.maxTouchPoints > 0;
 
   try { nameEl.value = localStorage.getItem('jka-name') || ''; } catch (e) {}
   if (params.has('log')) logEl.classList.add('show');
@@ -71,20 +74,39 @@
     const TICK_MS = forceTimer ? 4 : 50;  // 20 fps fallback: drains packets and sends usercmds, little CPU
     const STALL_MS = 250;
     let pending = null, rafQueued = false, lastRAF = performance.now();
-    const run = () => { const f = pending; pending = null; if (f) f(performance.now()); };
+    const run = () => {
+      const f = pending; pending = null;
+      if (!f) return;
+      const now = performance.now();
+      if (window.WebInput) WebInput.frame(now);   // gamepad polling (touch.js)
+      f(now);
+    };
     const ticker = new Worker(URL.createObjectURL(new Blob(
       ['onmessage=e=>setInterval(()=>postMessage(0),e.data)'], { type: 'text/javascript' })));
     ticker.onmessage = () => {
       if (pending && (forceTimer || document.hidden || performance.now() - lastRAF > STALL_MS)) run();
     };
     ticker.postMessage(TICK_MS);
+    // Frame cap on phones (heat, battery): skip display frames instead of the engine's com_maxfps,
+    // which busy-waits inside the frame in the browser. ?fps=N overrides the saved setting (phone menu,
+    // localStorage 'jka-fps'); 0 = every display frame.
+    let saved = 0;
+    try { saved = +localStorage.getItem('jka-fps') || 0; } catch (e) {}
+    let minGap = 0, lastRun = -1e9;
+    window.setMaxFps = fps => { minGap = fps > 0 ? 1000 / fps - 4 : 0; };  // slack for vsync jitter (60/90/120 Hz)
+    setMaxFps(params.has('fps') ? +params.get('fps') : MOBILE ? (saved || 30) : 0);
+    const onRAF = ts => {
+      rafQueued = false; lastRAF = performance.now();
+      if (ts - lastRun < minGap) {   // too early for the cap: wait for the next display frame
+        if (pending) { rafQueued = true; realRAF(onRAF); }
+        return;
+      }
+      lastRun = ts; run();
+    };
     window.requestAnimationFrame = cb => {
       pending = cb;
       // at most one real rAF outstanding, so a stalled window does not replay a burst of frames on return
-      if (!forceTimer && !rafQueued) {
-        rafQueued = true;
-        realRAF(() => { rafQueued = false; run(); lastRAF = performance.now(); });
-      }
+      if (!forceTimer && !rafQueued) { rafQueued = true; realRAF(onRAF); }
       return 0;
     };
   }
@@ -151,6 +173,12 @@
     const r = await fetch('base/manifest.json');
     if (r.status === 401) { location.href = '/login'; return; }
     manifest = await r.json();
+    log('mode: ' + (MOBILE ? 'mobile' : 'desktop'));
+    if (MOBILE) {
+      manifest.paks = manifest.mobile || [];
+      if (!manifest.paks.length)
+        throw new Error('the server is still preparing the phone version of the game data, try again in a few minutes');
+    }
     if (!manifest.paks.length) throw new Error('the server has no game data (pk3) installed');
     const total = manifest.paks.reduce((a, p) => a + p.size, 0);
     let got = 0;
@@ -170,11 +198,23 @@
     const FS = Module.FS;
     FS.mkdirTree('/jka/base');
     FS.mkdirTree('/home/web');
-    manifest.paks.forEach((p, i) => { FS.writeFile('/jka/base/' + p.name, paks[i]); paks[i] = null; });
+    // canOwn: MEMFS keeps the downloaded buffer instead of copying it (the pk3 would be in memory twice)
+    manifest.paks.forEach((p, i) => { FS.writeFile('/jka/base/' + p.name, paks[i], { canOwn: true }); paks[i] = null; });
     paks = [];
     document.getElementById('overlay').classList.add('hidden');
+    let video = ['+set', 'r_mode', '-2', '+set', 'com_hunkmegs', '256'];
+    if (MOBILE) {
+      // render at CSS pixels (devicePixelRatio ignored), landscape, at most 1280 wide; 30 fps.
+      // Round down: a window larger than the screen makes SDL find no display mode (GL init fails).
+      let w = Math.max(innerWidth, innerHeight), h = Math.min(innerWidth, innerHeight);
+      if (w > 1280) { h = h * 1280 / w; w = 1280; }
+      w = Math.floor(w / 2) * 2; h = Math.floor(h / 2) * 2;
+      video = ['+set', 'r_mode', '-1', '+set', 'r_customwidth', String(w), '+set', 'r_customheight', String(h),
+               '+set', 'com_hunkmegs', '128', '+set', 'com_maxfps', '0'];  // the shell caps the rate
+      log('mobile video: ' + w + 'x' + h);
+    }
     const args = ['+set', 'fs_basepath', '/jka', '+set', 'fs_homepath', '/home/web',
-                  '+set', 'r_mode', '-2', '+set', 'r_fullscreen', '0', '+set', 'com_hunkmegs', '256',
+                  ...video, '+set', 'r_fullscreen', '0',
                   '+set', 'net_enabled', '1', '+set', 'cl_allowDownload', '0',
                   '+set', 'sv_master1', '', '+set', 'sv_master2', '', '+set', 'sv_master3', '',
                   '+set', 'name', name,

@@ -13,7 +13,7 @@ This repo has two parts:
 |---|---|
 | `web/engine-mp/` | OpenJK MP (commit `260c59c`) ported to WebAssembly. Client = engine + cgame + ui + rd-vanilla, statically linked into `openjk_mp.wasm` |
 | `web/engine-mp/web-rename/` | `gen_rename.py` and the generated `{cgame,ui,renderer}.h` symbol-prefix headers |
-| `web/server/` | `gateway.py` (login, static files, WebSocket⇄UDP bridge), `repack.py` (slim client pk3), `start.sh`, `server.cfg`, `Dockerfile` |
+| `web/server/` | `gateway.py` (login, static files, WebSocket⇄UDP bridge), `repack.py` (slim client pk3; `profile=mobile` for phones), `start.sh`, `server.cfg`, `Dockerfile` |
 | `web/shell-mp/` | MP game page (pk3 download + Cache Storage, auto-connect) |
 | `web/fly.toml` | fly.io app `jka-web-ffa` (fra, shared-cpu-1x, 2 GB, volume `jka_data` on `/data`, auto-stop) |
 | `web/engine/`, `web/assets/`, `web/shell/` | SP demo: StaticJK engine + generated placeholder assets (`assets/gen/*.py`) |
@@ -61,6 +61,8 @@ podman run --rm -p 8080:8080 -e JKA_PASSWORD=secret -v ./data:/data:Z jka-mp
 - Log in at `/login`, open `/?timer`, click `#play`. `?timer` drives the main loop from a timer instead
   of `requestAnimationFrame`, which headless Chrome may not fire; `?log` shows the engine log, and F9
   toggles it.
+- Phone mode: a context with `isMobile: true, hasTouch: true` and a landscape viewport (e.g. 915×412)
+  is detected automatically; `?mobile` forces it in any context. `?timer` bypasses the 30 fps cap.
 - Headless mouse clicks do not move the in-game UI cursor. Use the console instead: `~`, `team free`,
   `say …`.
 - `fly logs` shows `ClientConnect`, `ChangeTeam` and `say:` lines from the dedicated server.

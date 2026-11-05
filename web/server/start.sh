@@ -34,6 +34,18 @@ if ls "$DATA_DIR"/*.pk3 >/dev/null 2>&1; then
       echo "client pk3 build failed (incomplete game data?)" >&2
     fi
   fi
+  # phone variant (web/MOBILE.md), built in the background; the manifest lists it once it exists.
+  # Same mod and marker logic as above; a newer repack.py (mobile filter changes) also rebuilds it.
+  MPK3="$CLIENT_DATA_DIR/jka-mp-mobile.pk3"
+  if [ ! -f "$MPK3" ] || [ "$(cat "$MPK3.mod" 2>/dev/null)" != "$FS_GAME_ARGS" ] || \
+     [ -n "$(find "$DATA_DIR" $MOD_DIR -name '*.pk3' -newer "$MPK3")" ] || [ /opt/gateway/repack.py -nt "$MPK3" ]; then
+    echo "building mobile client pk3 in the background..."
+    ( if nice python3 /opt/gateway/repack.py "$DATA_DIR" "$MPK3" ${MOD_DIR:+"mod=$MOD_DIR"} profile=mobile; then
+        printf '%s' "$FS_GAME_ARGS" > "$MPK3.mod"
+      else
+        echo "mobile client pk3 build failed" >&2
+      fi ) &
+  fi
 fi
 export CLIENT_DATA_DIR
 

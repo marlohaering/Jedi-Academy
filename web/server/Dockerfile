@@ -15,7 +15,7 @@ RUN mkdir /src/build && cd /src/build && setarch i686 cmake -DCMAKE_BUILD_TYPE=R
 
 FROM --platform=linux/386 docker.io/i386/debian:bookworm
 RUN apt-get -q update && DEBIAN_FRONTEND=noninteractive apt-get -q install -y --no-install-recommends \
-      python3 python3-aiohttp zlib1g libstdc++6 tini && rm -rf /var/lib/apt/lists/*
+      python3 python3-aiohttp python3-pil zlib1g libstdc++6 tini && rm -rf /var/lib/apt/lists/*
 COPY --from=builder /opt/JediAcademy /opt/openjk
 COPY server/gateway.py server/repack.py server/start.sh /opt/gateway/
 COPY server/server.cfg /opt/openjk/base/server.cfg

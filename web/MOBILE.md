@@ -1,6 +1,6 @@
 # Mobile concept: the MP client on phones
 
-Status: concept, agreed 2026-11-06. Nothing is implemented yet.
+Status: concept agreed 2026-11-06. P1 is implemented (see "P1 results"); P2–P4 are open.
 
 Goal: a phone player opens `jka.haering.me` in the browser and plays on the same FFA server as desktop
 players.
@@ -50,11 +50,17 @@ override it, so mobile mode can be tested on desktop too.
 
 ### Assets and memory
 
-- `repack.py --mobile` builds a second client pk3, `jka-mp-mobile.pk3`, with a budget of **≤ 200 MB**.
-  It contains only `mp/ffa3` and the models, sounds and effects actually needed. Textures are scaled to
-  ≤ 256 px and re-encoded as JPEG. Sounds are 22 kHz mono.
+- `repack.py … profile=mobile` builds a second client pk3, `jka-mp-mobile.pk3`, with a budget of
+  **≤ 200 MB**. `start.sh` builds it in the background at container start (≈16 s on a laptop).
+  - `textures/` and `models/map_objects/` are kept only where the map, the game code or a global shader
+    references them.
+  - Single-player-only content is dropped: SP dialogue, mission-select planets, per-level animation sets
+    and other maps' ambience.
+  - Images are scaled to ≤ 256 px (fonts and lightmaps untouched). Opaque TGAs become JPEGs. WAVs become
+    22 kHz mono.
   - `sv_pure 0` already allows clients with different files. Desktop keeps the full pk3.
-  - The gateway manifest lists both variants. The shell picks one by detection.
+  - The gateway manifest lists both variants (`paks`, `mobile`). The shell picks one by detection. If the
+    mobile pk3 is not built yet, phones get a "try again in a few minutes" message.
 - If the budget is still exceeded, cut in this order:
   1. Music, all of it or all but one track.
   2. Taunt, victory and death voice lines.
@@ -75,9 +81,12 @@ override it, so mobile mode can be tested on desktop too.
 - Mobile renders at CSS-pixel resolution, ignoring devicePixelRatio, with the width capped at 1280.
   It uses `r_mode -1` with `r_customwidth` and `r_customheight`, set once at start, since landscape is
   locked.
-- `com_maxfps 30` by default, with an option for 60, to limit heat and battery drain.
+- 30 fps by default (`?fps=N` overrides), to limit heat and battery drain. The shell caps the rate by
+  skipping display frames in its `requestAnimationFrame` wrapper, and the engine runs with
+  `com_maxfps 0`. The engine's own cap busy-waits inside the frame in the browser: it burned the whole
+  33 ms frame on the CPU.
 - **Render-path work is out of scope** (decided 2026-11-06, P0 dropped). Regal and the current draw
-  path stay as they are. Resolution and `com_maxfps` are the only performance levers.
+  path stay as they are. Resolution and the frame cap are the only performance levers.
 - If the frame rate turns out to be unplayable, possible later work, in order:
   1. Make `r_primitives 2` (glDrawElements) render correctly under Regal. On the laptop that takes the
      frame time from ≈11 to ≈2.6 ms. Desktop benefits too.
@@ -132,10 +141,29 @@ its cheap part (resolution, frame cap) moved into P1.
 
 | Phase | Content | Done when |
 |---|---|---|
-| **P1** Memory and resolution | No double copy. Hunk size and memory cap. `repack.py --mobile`. Manifest variant. Mobile resolution and `com_maxfps` | Loads and runs on the 9a (still without controls). Pk3 ≤ 200 MB. Tab memory and frame time measured |
+| **P1** Memory and resolution ✅ | No double copy. Hunk size and memory cap. `repack.py profile=mobile`. Manifest variant. Mobile resolution and frame cap | Loads and runs on the 9a (still without controls). Pk3 ≤ 200 MB. Tab memory and frame time measured |
 | **P2** Input | C API `web_move` / `web_look` / `web_key`. Touch overlay layout v1. Gamepad API | Move, aim, attack, jump, force and weapon all work by touch and gamepad |
 | **P3** Menus and chat | Auto `team free`. HTML pause menu. Quick-chat and keyboard chat | A full match from join to disconnect without the original menus |
 | **P4** PWA and polish | Manifest, persistent storage, wake lock, orientation screen, audio unlock, settings | Acceptance bar met. iOS pass on a real device |
+
+## P1 results (2026-11-06)
+
+Measured in headless Chrome (Playwright phone emulation, 915×412 CSS px, laptop GPU) against a local
+container. These are not Pixel 9a numbers yet.
+
+| | Desktop | Mobile |
+|---|---|---|
+| Client pk3 | 778 MB | **129 MB** (≈40 s at 27 Mbit/s) |
+| Render size | 1280×720 | 914×412 |
+| Frame rate | 60 fps | 30 fps (cap) |
+| Renderer process RSS in a match | ≈1160 MB | **≈510 MB** |
+| wasm heap | 256 MB | 256 MB (`com_hunkmegs 128`, `MAXIMUM_MEMORY` 1 GB) |
+
+- All 131 shaders of `mp/ffa3` resolve to images in the mobile pk3. Music is still included.
+- Detection works without parameters under phone emulation (`(pointer: coarse)` + touch).
+- Bug found and fixed: rounding the render width *up* (915 → 916 px) made the window larger than the
+  screen, and SDL then found no display mode, so GL init failed. The shell rounds down.
+- Still open for P1 on the real device: tab memory and frame time on the Pixel 9a (Brave, Vanadium).
 
 ## Open risks
 

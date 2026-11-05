@@ -631,6 +631,8 @@ if(BuildMPEngine)
 			-O2 --profiling-funcs
 			-sDISABLE_EXCEPTION_CATCHING=0 -sWASM=1
 			-sINITIAL_MEMORY=268435456 -sALLOW_MEMORY_GROWTH=1
+			# cap: fail with an out-of-memory error instead of the tab being killed (web/MOBILE.md)
+			-sMAXIMUM_MEMORY=1073741824
 			-sUSE_SDL=2 -sUSE_REGAL=1 -sUSE_LIBJPEG=1 -sUSE_LIBPNG=1 -sUSE_ZLIB=1
 			-sFULL_ES2=1   # emulate client-side vertex/index arrays (needed by glDrawElements, r_primitives 2)
 			-sFORCE_FILESYSTEM=1 -sASSERTIONS=1 -sERROR_ON_UNDEFINED_SYMBOLS=0
