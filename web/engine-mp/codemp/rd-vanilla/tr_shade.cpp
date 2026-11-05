@@ -178,6 +178,11 @@ static void R_DrawElements( int numIndexes, const glIndex_t *indexes ) {
 	int		primitives;
 
 	primitives = r_primitives->integer;
+#ifdef __EMSCRIPTEN__
+	// buffer-object path in tr_webgl_arrays.cpp; r_primitives 3 keeps the old per-vertex path for comparison
+	if ( primitives != 3 )
+		primitives = 2;
+#endif
 
 	// default is to use triangles if compiled vertex arrays are present
 	if ( primitives == 0 ) {

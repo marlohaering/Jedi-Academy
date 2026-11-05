@@ -68,6 +68,7 @@ set(MPVanillaRendererFiles
 	"${MPDir}/rd-vanilla/tr_surface.cpp"
 	"${MPDir}/rd-vanilla/tr_surfacesprites.cpp"
 	"${MPDir}/rd-vanilla/tr_world.cpp"
+	"${MPDir}/rd-vanilla/tr_webgl_arrays.cpp"
 	"${MPDir}/rd-vanilla/tr_WorldEffects.cpp"
 	"${MPDir}/rd-vanilla/tr_WorldEffects.h"
 	)

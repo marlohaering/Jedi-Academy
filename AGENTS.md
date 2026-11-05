@@ -73,9 +73,14 @@ podman run --rm -p 8080:8080 -e JKA_PASSWORD=secret -v ./data:/data:Z jka-mp
   `sv_pure 0` (clients use the repacked pk3).
 - Changing the map: edit `server.cfg`, and also the `map=` and `music=` arguments of `repack.py` in
   `start.sh`.
-- Performance: the client spends ~11 ms/frame (laptop iGPU, 60 fps), mostly in Regal's per-vertex
-  emulation (`R_ArrayElementDiscrete`). `r_primitives 2` (glDrawElements) would take ~2.6 ms, but it
-  renders a black screen under Regal. Fixing it is the main client-side optimisation left.
+- Rendering: Regal never uploads client-side vertex arrays for glDrawElements/glDrawArrays (its VAO
+  shadow buffers stay empty, so batched draws come out black). `rd-vanilla/tr_webgl_arrays.cpp`
+  intercepts the `qgl*Pointer`/`qglDraw*` calls (macros at the end of `qgl.h`), streams the arrays into
+  buffer objects and converts indices to 16-bit and GL_QUADS to triangles. The client links with
+  `-sFULL_ES2=1`. With `r_primitives 3` the old per-vertex path comes back, for comparisons.
+  Engine time per frame on the laptop iGPU: 11 ms → 6 ms.
+- Verify rendering changes by pixel-diffing old against new at fixed spots: a local server with `devmap`
+  (cheats) and `setviewpos x y z yaw` from the client console.
 - Measured from Hamburg: ~23 ms WebSocket game-path RTT (edge `ams` → machine `fra`), ~230 Mbit/s pk3
   download. `sv_fps 40` keeps the added snapshot latency low.
 - Ask the user before installing SDKs, packages or system tools.

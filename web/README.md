@@ -57,7 +57,8 @@ these changes:
 | Static modules instead of `dlopen`: `Sys_LoadGameDll` and `Sys_LoadDll` return the linked-in `cgame_GetModuleAPI`, `ui_GetModuleAPI` and `renderer_GetRefAPI` (`OJK_STATIC_MODULES`) | `shared/sys/sys_main.cpp`, `codemp/client/cl_main.cpp` |
 | Symbol renaming: every module carries its own copy of shared code (q_shared, bg_*, ui_shared …). `web-rename/gen_rename.py` finds the symbols that clash and writes `#define` headers that are force-included per module | `web-rename/` |
 | Browser main loop (`emscripten_set_main_loop`) | `shared/sys/sys_main.cpp` |
-| GL context via Regal, no `glext.h`, index drawing through `R_ArrayElementDiscrete` (same as StaticJK) | `shared/sdl/sdl_window.cpp`, `codemp/rd-vanilla/*` |
+| GL context via Regal, no `glext.h` | `shared/sdl/sdl_window.cpp`, `codemp/rd-vanilla/qgl.h` |
+| Batched drawing: Regal ignores client-side arrays for `glDrawElements`. The renderer streams vertex arrays and 16-bit indices into buffer objects instead, about 2× faster than StaticJK's per-vertex path (`r_primitives 3` brings that path back) | `codemp/rd-vanilla/tr_webgl_arrays.cpp`, `qgl.h`, `tr_shade.cpp` |
 | Sockets: no `FIONBIO` ioctl (Emscripten sockets never block) | `codemp/qcommon/net_ip.cpp` |
 | No console stdin, no `getpwuid`, no `sched_setaffinity` | `shared/sys/*` |
 | Fixed signature mismatches that only break in WebAssembly (`openjk_minizip_free`, `C_MP3Stream_Decode`), renamed mp3 `window()` | `lib/minizip/unzip.c`, `codemp/mp3code/*` |
@@ -124,7 +125,8 @@ fly logs                                      # server log: connects, team chang
 * `g_antiFakePlayer 0`: all players arrive from 127.0.0.1, so the per-IP limit would block the fourth
   player.
 * First visit: the browser downloads ≈780 MB once. Later visits load from the browser cache.
-* Performance depends on the GPU. Regal translates old OpenGL immediate-mode drawing to WebGL in software.
+* Performance, measured on a laptop with Intel iGPU in Chrome: 60 fps with ~6 ms engine time per frame.
+  With software rendering (no GPU): ~29 fps. From Hamburg the game round trip to fra is ~22 ms.
 
 ---
 

@@ -409,6 +409,8 @@ extern PFNGLMULTITEXCOORD2FARBPROC qglMultiTexCoord2fARB;
 #if !defined(__APPLE__)
 extern PFNGLTEXIMAGE3DPROC qglTexImage3D;
 extern PFNGLTEXSUBIMAGE3DPROC qglTexSubImage3D;
+
+
 #endif
 
 extern PFNGLCOMBINERPARAMETERFVNVPROC qglCombinerParameterfvNV;
@@ -448,3 +450,34 @@ extern PFNGLISPROGRAMARBPROC qglIsProgramARB;
 
 extern PFNGLLOCKARRAYSEXTPROC qglLockArraysEXT;
 extern PFNGLUNLOCKARRAYSEXTPROC qglUnlockArraysEXT;
+
+#if defined( __EMSCRIPTEN__ )
+// Browser build: route client vertex arrays through buffer objects (tr_webgl_arrays.cpp),
+// because Regal never uploads client-side arrays for glDrawElements/glDrawArrays.
+void WGL_VertexPointer( GLint size, GLenum type, GLsizei stride, const void *p );
+void WGL_ColorPointer( GLint size, GLenum type, GLsizei stride, const void *p );
+void WGL_NormalPointer( GLenum type, GLsizei stride, const void *p );
+void WGL_TexCoordPointer( GLint size, GLenum type, GLsizei stride, const void *p );
+void WGL_EnableClientState( GLenum array );
+void WGL_DisableClientState( GLenum array );
+void WGL_DrawElements( GLenum mode, GLsizei count, GLenum type, const void *indices );
+void WGL_DrawArrays( GLenum mode, GLint first, GLsizei count );
+#if !defined( WGL_ARRAYS_IMPL )
+#undef qglVertexPointer
+#undef qglColorPointer
+#undef qglNormalPointer
+#undef qglTexCoordPointer
+#undef qglEnableClientState
+#undef qglDisableClientState
+#undef qglDrawElements
+#undef qglDrawArrays
+#define qglVertexPointer		WGL_VertexPointer
+#define qglColorPointer			WGL_ColorPointer
+#define qglNormalPointer		WGL_NormalPointer
+#define qglTexCoordPointer		WGL_TexCoordPointer
+#define qglEnableClientState	WGL_EnableClientState
+#define qglDisableClientState	WGL_DisableClientState
+#define qglDrawElements			WGL_DrawElements
+#define qglDrawArrays			WGL_DrawArrays
+#endif
+#endif

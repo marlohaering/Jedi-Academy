@@ -632,6 +632,7 @@ if(BuildMPEngine)
 			-sDISABLE_EXCEPTION_CATCHING=0 -sWASM=1
 			-sINITIAL_MEMORY=268435456 -sALLOW_MEMORY_GROWTH=1
 			-sUSE_SDL=2 -sUSE_REGAL=1 -sUSE_LIBJPEG=1 -sUSE_LIBPNG=1 -sUSE_ZLIB=1
+			-sFULL_ES2=1   # emulate client-side vertex/index arrays (needed by glDrawElements, r_primitives 2)
 			-sFORCE_FILESYSTEM=1 -sASSERTIONS=1 -sERROR_ON_UNDEFINED_SYMBOLS=0
 			-sINVOKE_RUN=0 "-sEXPORTED_RUNTIME_METHODS=[FS,callMain,IDBFS]" -lidbfs.js)
 	endif()
