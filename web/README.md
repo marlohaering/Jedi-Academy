@@ -127,6 +127,7 @@ fly logs                                      # server log: connects, team chang
 * First visit: the browser downloads ≈780 MB once. Later visits load from the browser cache.
 * Performance, measured on a laptop with Intel iGPU in Chrome: 60 fps with ~6 ms engine time per frame.
   With software rendering (no GPU): ~29 fps. From Hamburg the game round trip to fra is ~22 ms.
+* Phones are not supported yet. [`MOBILE.md`](MOBILE.md) has the agreed concept and phases.
 
 ---
 
