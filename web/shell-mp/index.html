@@ -58,10 +58,30 @@
   try { nameEl.value = localStorage.getItem('jka-name') || ''; } catch (e) {}
   if (params.has('log')) logEl.classList.add('show');
   window.alert = msg => { console.error('ALERT: ' + msg); log('ALERT: ' + msg); logEl.classList.add('show'); };
-  if (params.has('timer')) {  // debug: keep running in hidden tabs where rAF is paused
-    const ch = new MessageChannel(); const q = [];
-    ch.port1.onmessage = () => { const f = q.shift(); f && f(performance.now()); };
-    window.requestAnimationFrame = cb => { setTimeout(() => { q.push(cb); ch.port2.postMessage(0); }, 0); return 0; };
+  // Keep the engine's main loop running while the tab is hidden. Browsers pause requestAnimationFrame
+  // in hidden/occluded tabs, but the WebSocket keeps queuing server snapshots; on return the engine
+  // would swallow thousands at once ("CG_ReadNextSnapshot: way out of range") and the server would
+  // see no usercmds. While hidden, frames are driven by a Worker timer instead (worker timers are not
+  // throttled like main-thread ones). ?timer forces the timer always (headless testing).
+  {
+    const realRAF = window.requestAnimationFrame.bind(window);
+    const forceTimer = params.has('timer');
+    const HIDDEN_MS = 50;  // 20 fps in the background: drains packets and sends usercmds, little CPU
+    const useTimer = () => forceTimer || document.hidden;
+    let pending = null;
+    const run = () => { const f = pending; pending = null; if (f) f(performance.now()); };
+    const ticker = new Worker(URL.createObjectURL(new Blob(
+      ['let t=null;onmessage=e=>{clearInterval(t);t=e.data?setInterval(()=>postMessage(0),e.data):null}'],
+      { type: 'text/javascript' })));
+    ticker.onmessage = () => { if (useTimer()) run(); };
+    const viaRAF = () => realRAF(() => { if (!useTimer()) run(); });
+    window.requestAnimationFrame = cb => { pending = cb; if (!useTimer()) viaRAF(); return 0; };
+    const update = () => {
+      ticker.postMessage(useTimer() ? (forceTimer && !document.hidden ? 4 : HIDDEN_MS) : 0);
+      if (!useTimer() && pending) viaRAF();
+    };
+    document.addEventListener('visibilitychange', update);
+    update();
   }
 
   function log(text) {

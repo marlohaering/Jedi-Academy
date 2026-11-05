@@ -58,14 +58,17 @@ podman run --rm -p 8080:8080 -e JKA_PASSWORD=secret -v ./data:/data:Z jka-mp
 
 - Use headless Chrome through Playwright with `channel: 'chrome'` and the args
   `--use-angle=swiftshader --enable-unsafe-swiftshader`.
-- Log in at `/login`, open `/?timer`, click `#play`. `?timer` keeps the main loop running in headless
-  or hidden tabs; `?log` shows the engine log, and F9 toggles it.
+- Log in at `/login`, open `/?timer`, click `#play`. `?timer` drives the main loop from a timer instead
+  of `requestAnimationFrame`, which headless Chrome may not fire; `?log` shows the engine log, and F9
+  toggles it.
 - Headless mouse clicks do not move the in-game UI cursor. Use the console instead: `~`, `team free`,
   `say …`.
 - `fly logs` shows `ClientConnect`, `ChangeTeam` and `say:` lines from the dedicated server.
 
 ## Gotchas
 
+- Hidden tabs pause `requestAnimationFrame`. The shell then drives `Com_Frame` from a Worker timer at
+  20 fps, otherwise queued snapshots flood cgame on return (`CG_ReadNextSnapshot: way out of range`).
 - All players reach `openjkded` from `127.0.0.1` through the gateway. Keep `g_antiFakePlayer 0` and
   `sv_pure 0` (clients use the repacked pk3).
 - Changing the map: edit `server.cfg`, and also the `map=` and `music=` arguments of `repack.py` in
