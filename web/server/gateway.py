@@ -74,9 +74,13 @@ def valid_token(token):
         return False
 
 
+# fetched without the session cookie (the browser loads the manifest and icons without credentials)
+PUBLIC = ('/login', '/healthz', '/manifest.webmanifest', '/sw.js', '/icon-192.png', '/icon-512.png')
+
+
 @web.middleware
 async def auth(request, handler):
-    if request.path in ('/login', '/healthz') or valid_token(request.cookies.get(COOKIE, '')):
+    if request.path in PUBLIC or valid_token(request.cookies.get(COOKIE, '')):
         return await handler(request)
     if request.path == '/' or request.path.endswith('.html'):
         raise web.HTTPFound('/login')
@@ -173,6 +177,8 @@ async def static(request):
     resp = web.FileResponse(path, headers=headers)
     if path.endswith('.wasm'):
         resp.content_type = 'application/wasm'
+    elif path.endswith('.webmanifest'):
+        resp.content_type = 'application/manifest+json'
     return resp
 
 

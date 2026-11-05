@@ -72,6 +72,8 @@
     color:rgba(235,242,255,calc(var(--o) + .3)); font:600 calc(12px * var(--s)) system-ui, sans-serif;
     text-transform:uppercase; letter-spacing:.04em; box-sizing:border-box; }
   #touch .b.down { background:rgba(74,163,255,calc(var(--o) + .2)); }
+  #touch .b[data-btn=full] { font-size:calc(22px * var(--s)); }
+  #touch.fs .b[data-btn=full] { display:none; }
   #touch .stick { position:absolute; border-radius:50%; pointer-events:none; display:none;
     border:2px solid rgba(200,220,255,var(--o)); box-sizing:border-box; }
   #touch .stick.base { width:calc(120px * var(--s)); height:calc(120px * var(--s)); margin:calc(-60px * var(--s)); }
@@ -99,6 +101,7 @@
     ['use', 'Use', 54, { left: 16, top: 16 }],
     ['menu', 'Menu', 54, { left: 80, top: 16 }],
     ['scores', 'Scores', 54, { left: 144, top: 16 }],
+    ['full', '⛶', 54, { left: 208, top: 16 }],
   ];
   // held buttons: console commands sent on press (+) and release (-)
   const HOLD = { attack: 'attack', alt: 'altattack', jump: 'moveup', crouch: 'movedown', use: 'use', scores: 'scores' };
@@ -198,7 +201,8 @@
   }
   function release(p) {
     const b = p.btn;
-    if (HOLD[b]) cmd('-' + HOLD[b]);
+    if (b === 'full') fullscreen();   // on release: a touch's pointerup carries the user activation
+    else if (HOLD[b]) cmd('-' + HOLD[b]);
     else if (b === 'force') forceUp();
     else if (b === 'weapon' && p.timer) { clearTimeout(p.timer); cmd('weapnext'); }
   }
@@ -326,7 +330,21 @@
     if (show) updateChip();
   }
 
+  // Fullscreen on the whole document (the overlay must stay visible), then lock landscape.
+  // Not needed when running as an installed app (display: fullscreen).
+  const isFullscreen = () => !!document.fullscreenElement || matchMedia('(display-mode: fullscreen)').matches;
+  function fullscreen() {
+    const el = document.documentElement;
+    if (isFullscreen() || !el.requestFullscreen) return;
+    el.requestFullscreen({ navigationUI: 'hide' })
+      .then(() => screen.orientation && screen.orientation.lock && screen.orientation.lock('landscape'))
+      .catch(() => {});
+  }
+  function onFullscreenChange() { if (root) root.classList.toggle('fs', isFullscreen()); }
+  document.addEventListener('fullscreenchange', onFullscreenChange);
+
   window.WebInput = {
+    fullscreen,
     // touch: show the touch overlay (phones); the gamepad works in both modes
     init(module, touch) {
       M = module; touchMode = touch;
@@ -335,6 +353,7 @@
       root.addEventListener('pointerup', forwardToRadial);
       addEventListener('pointerdown', () => { if (padActive && touchMode) padActive = false; }, true);
       setInterval(tick, 250);
+      onFullscreenChange();
     },
     frame(now) { if (M && M._web_move) pollPad(now); },
     // when the menu is open the overlay is hidden; P3 replaces the original menus

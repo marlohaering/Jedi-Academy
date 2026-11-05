@@ -193,6 +193,22 @@ Tested headless (touch emulation, fake gamepad) against a local container:
 - Known issues: the buttons overlap the HUD corners (health and force/ammo). Sensitivity and button
   sizes are untuned until tested on the phone.
 
+## PWA and fullscreen, pulled forward from P4 (2026-11-06)
+
+After the first phone test (Brave, Pixel 9a): the bottom of the picture was behind the address bar, a
+fullscreen mode broke the overlay, and the page could not be installed.
+
+- The canvas is `position: fixed; inset: 0; object-fit: contain` instead of `100vw × 100vh` (on Android,
+  `100vh` reaches under the address bar). The picture keeps its aspect ratio when bars appear or
+  disappear.
+- The mobile render size comes from `screen.width/height` (landscape, ≤ 1280 wide) instead of the
+  window size, since the game runs fullscreen.
+- Tapping "Join game" requests fullscreen on the whole document (`documentElement`, so the overlay stays
+  visible) and locks landscape. A ⛶ button in the overlay does the same after leaving fullscreen.
+- Installable: `manifest.webmanifest` (`display: fullscreen`, `orientation: landscape`), icons, and a
+  pass-through service worker `sw.js`. The gateway serves these four files without the session cookie,
+  because browsers fetch the manifest and icons without credentials.
+
 ## Open risks
 
 - **Frame rate:** with the render path out of scope, the game may run but be too slow to play

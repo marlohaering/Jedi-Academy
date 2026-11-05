@@ -2,13 +2,19 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#05070c">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
 <title>Jedi Academy FFA</title>
 <style>
   :root { --bg:#05070c; --fg:#d8e2f0; --muted:#7d8aa0; --accent:#4aa3ff; --panel:#0c1220; }
   html, body { margin:0; height:100%; background:var(--bg); color:var(--fg);
     font: 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; overflow:hidden; }
-  #canvas { display:block; width:100vw; height:100vh; background:#000; outline:none; }
+  /* fixed + 100% follows the visible viewport (100vh would reach under Android's address bar);
+     object-fit keeps the aspect ratio when the viewport changes (bars, fullscreen) */
+  #canvas { position:fixed; inset:0; width:100%; height:100%; display:block; background:#000; outline:none;
+    object-fit:contain; }
   #overlay { position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
     background:radial-gradient(ellipse at center, #0d1a33 0%, var(--bg) 70%); z-index:2; padding:0 16px; }
   #overlay.hidden { display:none; }
@@ -200,6 +206,7 @@
   function start() {
     if (!engineReady || !paks || start.done) return;
     start.done = true;
+    if (MOBILE) WebInput.fullscreen();   // needs the tap's user activation, so before anything async
     const name = (nameEl.value || 'Padawan').replace(/[";\\]/g, '').slice(0, 31);
     try { localStorage.setItem('jka-name', name); } catch (e) {}
     const FS = Module.FS;
@@ -211,9 +218,9 @@
     document.getElementById('overlay').classList.add('hidden');
     let video = ['+set', 'r_mode', '-2', '+set', 'com_hunkmegs', '256'];
     if (MOBILE) {
-      // render at CSS pixels (devicePixelRatio ignored), landscape, at most 1280 wide; 30 fps.
-      // Round down: a window larger than the screen makes SDL find no display mode (GL init fails).
-      let w = Math.max(innerWidth, innerHeight), h = Math.min(innerWidth, innerHeight);
+      // render at the screen's CSS pixel size in landscape (devicePixelRatio ignored; the game runs in
+      // fullscreen or as an installed app), at most 1280 wide; 30 fps.
+      let w = Math.max(screen.width, screen.height), h = Math.min(screen.width, screen.height);
       if (w > 1280) { h = h * 1280 / w; w = 1280; }
       w = Math.floor(w / 2) * 2; h = Math.floor(h / 2) * 2;
       video = ['+set', 'r_mode', '-1', '+set', 'r_customwidth', String(w), '+set', 'r_customheight', String(h),
@@ -231,6 +238,7 @@
     WebInput.init(Module, MOBILE);   // touch overlay on phones, gamepad everywhere (touch.js)
   }
   playBtn.addEventListener('click', start);
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(e => log('sw: ' + e.message));
   nameEl.addEventListener('keydown', e => { if (e.key === 'Enter') start(); });
 })();
 </script>
