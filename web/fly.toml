@@ -1,0 +1,35 @@
+# fly.io deployment of the browser Jedi Academy MP server (see server/README.md)
+app = "jka-web-ffa"            # change to your own app name
+primary_region = "fra"
+
+[build]
+  dockerfile = "server/Dockerfile"
+
+[env]
+  DATA_DIR = "/data/base"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "stop"   # machine sleeps when nobody is connected
+  auto_start_machines = true
+  min_machines_running = 0
+  [http_service.concurrency]
+    type = "connections"
+    soft_limit = 200
+    hard_limit = 250
+
+[[http_service.checks]]
+  grace_period = "20s"
+  interval = "30s"
+  method = "GET"
+  path = "/healthz"
+  timeout = "5s"
+
+[[mounts]]
+  source = "jka_data"           # holds base/*.pk3 (the game data is not baked into the image)
+  destination = "/data"
+
+[[vm]]
+  size = "shared-cpu-1x"   # plenty for ~4 players
+  memory = "1gb"

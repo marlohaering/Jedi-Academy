@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jedi Academy Web</title>
+<style>
+  :root { --bg:#05070c; --fg:#d8e2f0; --muted:#7d8aa0; --accent:#4aa3ff; --panel:#0c1220; }
+  html, body { margin:0; height:100%; background:var(--bg); color:var(--fg);
+    font: 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; overflow:hidden; }
+  #canvas { display:block; width:100vw; height:100vh; background:#000; outline:none; }
+  #overlay { position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
+    background:radial-gradient(ellipse at center, #0d1a33 0%, var(--bg) 70%); z-index:2; }
+  #overlay.hidden { display:none; }
+  .card { max-width:520px; padding:28px 32px; text-align:center; }
+  h1 { margin:0 0 6px; font-size:28px; letter-spacing:.06em; color:#ffe81f; text-transform:uppercase; }
+  p { color:var(--muted); margin:8px 0; }
+  #status { color:var(--fg); min-height:1.4em; }
+  progress { width:100%; height:6px; accent-color:var(--accent); }
+  button { margin-top:16px; padding:10px 22px; font-size:15px; border-radius:6px; border:1px solid var(--accent);
+    background:transparent; color:var(--fg); cursor:pointer; }
+  button:hover { background:var(--accent); color:#000; }
+  button:disabled { opacity:.4; cursor:default; }
+  kbd { background:var(--panel); border:1px solid #233; border-radius:3px; padding:0 5px; font-size:12px; }
+  #log { position:fixed; left:0; right:0; bottom:0; max-height:35vh; overflow:auto; margin:0; padding:6px 10px;
+    font:11px/1.35 ui-monospace, monospace; background:rgba(0,0,0,.8); color:#9fb; z-index:3; display:none; white-space:pre-wrap; }
+  #log.show { display:block; }
+</style>
+</head>
+<body>
+<canvas id="canvas" tabindex="-1" oncontextmenu="event.preventDefault()"></canvas>
+<div id="overlay">
+  <div class="card">
+    <h1>Jedi Academy</h1>
+    <p>OpenJK single-player engine compiled to WebAssembly, running a<br>
+      placeholder asset pack (no original game data).</p>
+    <p id="status">Loading engine…</p>
+    <progress id="progress" max="1" value="0"></progress>
+    <button id="play" disabled>Play</button>
+    <p style="margin-top:18px"><kbd>WASD</kbd> move · <kbd>Mouse</kbd> look · <kbd>Click</kbd> attack ·
+      <kbd>Space</kbd> jump · <kbd>~</kbd> console · <kbd>F9</kbd> log</p>
+  </div>
+</div>
+<pre id="log"></pre>
+<script>
+(function () {
+  const statusEl = document.getElementById('status');
+  const progressEl = document.getElementById('progress');
+  const playBtn = document.getElementById('play');
+  const logEl = document.getElementById('log');
+  const params = new URLSearchParams(location.search);
+  const PAKS = ['zz_placeholder.pk3'];
+  const lines = [];
+  if (params.has('log')) logEl.classList.add('show');
+  window.alert = msg => { console.error('ALERT: ' + msg); log('ALERT: ' + msg); logEl.classList.add('show'); };
+  if (params.has('timer')) {  // debug: keep running in hidden tabs where rAF is paused
+    const ch = new MessageChannel(); const q = [];
+    ch.port1.onmessage = () => { const f = q.shift(); f && f(performance.now()); };
+    window.requestAnimationFrame = cb => { setTimeout(() => { q.push(cb); ch.port2.postMessage(0); }, 0); return 0; };
+  }
+
+  function log(text) {
+    lines.push(text);
+    if (lines.length > 600) lines.shift();
+    logEl.textContent = lines.join('\n');
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+  window.addEventListener('keydown', e => { if (e.key === 'F9') { logEl.classList.toggle('show'); e.preventDefault(); } });
+
+  async function fetchPak(name) {
+    const resp = await fetch('base/' + name);
+    if (!resp.ok) throw new Error(name + ': HTTP ' + resp.status);
+    return new Uint8Array(await resp.arrayBuffer());
+  }
+
+  let engineReady = false, paks = null;
+  function maybeReady() {
+    if (engineReady && paks) { statusEl.textContent = 'Ready.'; progressEl.value = 1; playBtn.disabled = false; if (params.has('autostart')) start(); }
+  }
+
+  window.Module = {
+    canvas: document.getElementById('canvas'),
+    print: t => { console.log(t); log(t); },
+    printErr: t => { console.warn(t); log(t); },
+    onRuntimeInitialized() { engineReady = true; maybeReady(); },
+    onAbort(what) { statusEl.textContent = 'Engine crashed: ' + what; document.getElementById('overlay').classList.remove('hidden'); logEl.classList.add('show'); },
+    setStatus(t) { if (t) statusEl.textContent = t; },
+  };
+
+  Promise.all(PAKS.map(fetchPak)).then(data => {
+    paks = data; progressEl.value = 0.6; statusEl.textContent = 'Assets loaded, starting engine…'; maybeReady();
+  }).catch(e => { statusEl.textContent = 'Failed to load assets: ' + e.message; });
+
+  function start() {
+    if (!engineReady || !paks || start.done) return;
+    start.done = true;
+    const FS = Module.FS;
+    FS.mkdirTree('/jka/base');
+    FS.mkdirTree('/home/web');
+    PAKS.forEach((n, i) => FS.writeFile('/jka/base/' + n, paks[i]));
+    document.getElementById('overlay').classList.add('hidden');
+    const args = ['+set', 'fs_basepath', '/jka', '+set', 'fs_homepath', '/home/web',
+                  '+set', 'r_mode', '-2', '+set', 'r_fullscreen', '0', '+set', 'com_hunkmegs', '128'];
+    const map = params.get('map');
+    if (map) args.push('+devmap', map);
+    Module.callMain(args);
+    Module.canvas.focus();
+  }
+  playBtn.addEventListener('click', start);
+  window.addEventListener('keydown', e => { if (e.key === 'Enter' && !start.done) start(); });
+})();
+</script>
+<script async src="jedi_academy.js"></script>
+</body>
+</html>

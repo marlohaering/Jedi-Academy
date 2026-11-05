@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jedi Academy FFA</title>
+<style>
+  :root { --bg:#05070c; --fg:#d8e2f0; --muted:#7d8aa0; --accent:#4aa3ff; --panel:#0c1220; }
+  html, body { margin:0; height:100%; background:var(--bg); color:var(--fg);
+    font: 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; overflow:hidden; }
+  #canvas { display:block; width:100vw; height:100vh; background:#000; outline:none; }
+  #overlay { position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
+    background:radial-gradient(ellipse at center, #0d1a33 0%, var(--bg) 70%); z-index:2; padding:0 16px; }
+  #overlay.hidden { display:none; }
+  .card { width:100%; max-width:520px; text-align:center; }
+  h1 { margin:0 0 6px; font-size:28px; letter-spacing:.06em; color:#ffe81f; text-transform:uppercase; }
+  p { color:var(--muted); margin:8px 0; }
+  #status { color:var(--fg); min-height:1.4em; }
+  progress { width:100%; height:6px; accent-color:var(--accent); }
+  input { width:100%; max-width:280px; box-sizing:border-box; margin-top:14px; padding:10px 12px; font-size:15px;
+    border-radius:6px; background:var(--panel); color:var(--fg); border:1px solid #23324d; text-align:center; }
+  button { margin-top:12px; padding:10px 22px; font-size:15px; border-radius:6px; border:1px solid var(--accent);
+    background:transparent; color:var(--fg); cursor:pointer; }
+  button:hover { background:var(--accent); color:#000; }
+  button:disabled { opacity:.4; cursor:default; }
+  kbd { background:var(--panel); border:1px solid #233; border-radius:3px; padding:0 5px; font-size:12px; }
+  #log { position:fixed; left:0; right:0; bottom:0; max-height:35vh; overflow:auto; margin:0; padding:6px 10px;
+    font:11px/1.35 ui-monospace, monospace; background:rgba(0,0,0,.8); color:#9fb; z-index:3; display:none; white-space:pre-wrap; }
+  #log.show { display:block; }
+</style>
+</head>
+<body>
+<canvas id="canvas" tabindex="-1" oncontextmenu="event.preventDefault()"></canvas>
+<div id="overlay">
+  <div class="card">
+    <h1>Jedi Academy</h1>
+    <p>Multiplayer · Free For All</p>
+    <p id="status">Loading engine…</p>
+    <progress id="progress" max="1" value="0"></progress>
+    <div><input id="name" maxlength="31" placeholder="Your name" autocomplete="nickname"></div>
+    <button id="play" disabled>Join game</button>
+    <p style="margin-top:18px"><kbd>WASD</kbd> move · <kbd>Mouse</kbd> look · <kbd>Click</kbd> attack ·
+      <kbd>Space</kbd> jump · <kbd>Tab</kbd> scores · <kbd>T</kbd> chat · <kbd>~</kbd> console · <kbd>F9</kbd> log</p>
+  </div>
+</div>
+<pre id="log"></pre>
+<script>
+(function () {
+  const statusEl = document.getElementById('status');
+  const progressEl = document.getElementById('progress');
+  const playBtn = document.getElementById('play');
+  const nameEl = document.getElementById('name');
+  const logEl = document.getElementById('log');
+  const params = new URLSearchParams(location.search);
+  const CACHE = 'jka-paks-v1';
+  const lines = [];
+
+  try { nameEl.value = localStorage.getItem('jka-name') || ''; } catch (e) {}
+  if (params.has('log')) logEl.classList.add('show');
+  window.alert = msg => { console.error('ALERT: ' + msg); log('ALERT: ' + msg); logEl.classList.add('show'); };
+  if (params.has('timer')) {  // debug: keep running in hidden tabs where rAF is paused
+    const ch = new MessageChannel(); const q = [];
+    ch.port1.onmessage = () => { const f = q.shift(); f && f(performance.now()); };
+    window.requestAnimationFrame = cb => { setTimeout(() => { q.push(cb); ch.port2.postMessage(0); }, 0); return 0; };
+  }
+
+  function log(text) {
+    lines.push(text);
+    if (lines.length > 800) lines.shift();
+    logEl.textContent = lines.join('\n');
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+  window.addEventListener('keydown', e => { if (e.key === 'F9') { logEl.classList.toggle('show'); e.preventDefault(); } });
+
+  const mb = n => (n / 1048576).toFixed(0) + ' MB';
+
+  // Download a pk3 once and keep it in the browser's Cache Storage; later visits load from disk.
+  async function loadPak(pak, onBytes) {
+    const url = new URL('base/' + pak.name + '?v=' + pak.version, location.href).href;
+    let cache = null;
+    try { cache = await caches.open(CACHE); } catch (e) { /* no Cache Storage (private mode) */ }
+    if (cache) {
+      const hit = await cache.match(url);
+      if (hit) { const buf = await hit.arrayBuffer(); onBytes(buf.byteLength); return new Uint8Array(buf); }
+    }
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error(pak.name + ': HTTP ' + resp.status);
+    const out = new Uint8Array(pak.size);
+    const reader = resp.body.getReader();
+    let off = 0;
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      out.set(value, off); off += value.length; onBytes(value.length);
+    }
+    if (cache) {
+      try {
+        await cache.put(url, new Response(out, { headers: { 'Content-Type': 'application/octet-stream' } }));
+        // drop older versions of the same file
+        for (const req of await cache.keys())
+          if (req.url.includes('/base/' + pak.name + '?') && req.url !== url) await cache.delete(req);
+      } catch (e) { log('cache: ' + e.message); }
+    }
+    return out;
+  }
+
+  let engineReady = false, paks = null, manifest = null;
+  function maybeReady() {
+    if (!engineReady || !paks) return;
+    statusEl.textContent = 'Ready.'; progressEl.value = 1; playBtn.disabled = false;
+    if (params.has('autostart')) start();
+  }
+
+  window.Module = {
+    canvas: document.getElementById('canvas'),
+    print: t => { console.log(t); log(t); },
+    printErr: t => { console.warn(t); log(t); },
+    onRuntimeInitialized() { engineReady = true; maybeReady(); },
+    onAbort(what) { statusEl.textContent = 'Engine crashed: ' + what; document.getElementById('overlay').classList.remove('hidden'); logEl.classList.add('show'); },
+    setStatus(t) { if (t) log(t); },
+    // every UDP packet goes over this WebSocket; the gateway relays it to the game server
+    websocket: { url: (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws', subprotocol: 'binary' },
+  };
+
+  (async () => {
+    const r = await fetch('base/manifest.json');
+    if (r.status === 401) { location.href = '/login'; return; }
+    manifest = await r.json();
+    if (!manifest.paks.length) throw new Error('the server has no game data (pk3) installed');
+    const total = manifest.paks.reduce((a, p) => a + p.size, 0);
+    let got = 0;
+    const tick = n => { got += n; progressEl.value = 0.95 * got / total; statusEl.textContent = 'Loading game data… ' + mb(got) + ' / ' + mb(total); };
+    const data = [];
+    for (const p of manifest.paks) data.push(await loadPak(p, tick));
+    paks = data;
+    statusEl.textContent = 'Game data loaded.';
+    maybeReady();
+  })().catch(e => { statusEl.textContent = 'Failed to load game data: ' + e.message; });
+
+  function start() {
+    if (!engineReady || !paks || start.done) return;
+    start.done = true;
+    const name = (nameEl.value || 'Padawan').replace(/[";\\]/g, '').slice(0, 31);
+    try { localStorage.setItem('jka-name', name); } catch (e) {}
+    const FS = Module.FS;
+    FS.mkdirTree('/jka/base');
+    FS.mkdirTree('/home/web');
+    manifest.paks.forEach((p, i) => { FS.writeFile('/jka/base/' + p.name, paks[i]); paks[i] = null; });
+    paks = [];
+    document.getElementById('overlay').classList.add('hidden');
+    const args = ['+set', 'fs_basepath', '/jka', '+set', 'fs_homepath', '/home/web',
+                  '+set', 'r_mode', '-2', '+set', 'r_fullscreen', '0', '+set', 'com_hunkmegs', '256',
+                  '+set', 'net_enabled', '1', '+set', 'cl_allowDownload', '0',
+                  '+set', 'sv_master1', '', '+set', 'sv_master2', '', '+set', 'sv_master3', '',
+                  '+set', 'name', name,
+                  '+connect', 'jka-server:29070'];
+    Module.callMain(args);
+    Module.canvas.focus();
+  }
+  playBtn.addEventListener('click', start);
+  nameEl.addEventListener('keydown', e => { if (e.key === 'Enter') start(); });
+})();
+</script>
+<script async src="openjk_mp.js"></script>
+</body>
+</html>
