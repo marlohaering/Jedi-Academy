@@ -667,7 +667,14 @@ static rserr_t GLimp_SetMode(glconfig_t *glConfig, const windowDesc_t *windowDes
 
 	if (!GLimp_DetectAvailableModes())
 	{
+#ifdef __EMSCRIPTEN__
+		// The mode list only feeds the resolution menu. In the browser the canvas can have any size, and
+		// SDL fails here whenever the window is larger than screen.width/height (e.g. a landscape size
+		// on a phone held in portrait), which must not abort the renderer.
+		Com_Printf( "...continuing without a display mode list\n" );
+#else
 		return RSERR_UNKNOWN;
+#endif
 	}
 
 	return RSERR_OK;

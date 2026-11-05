@@ -1325,6 +1325,82 @@ void CL_FinishMove( usercmd_t *cmd ) {
 	VectorCopy( cl.viewangles, cl_lastViewAngles );
 }
 
+#ifdef __EMSCRIPTEN__
+/*
+=================
+Browser input API (web/MOBILE.md, phase P2)
+
+Called from JavaScript (touch overlay, Gamepad API) between frames:
+  web_move(x, y)      analog move stick, x = right, y = forward, both -1..1; stays set until changed.
+                      Below WEB_WALK deflection the player walks, above it runs.
+  web_look(dx, dy)    look delta, goes through the normal mouse path (sensitivity, menus)
+  web_key(key, down)  key event (keycodes from keycodes.h), so binds and menus work
+  web_cmd(text)       console command text (e.g. "+attack", "weapon 3")
+  web_state()         pointer to WEB_STATE_COUNT ints describing the local player, see below
+=================
+*/
+#include <emscripten.h>
+void Sys_QueEvent( int time, sysEventType_t type, int value, int value2, int ptrLength, void *ptr );
+
+#define WEB_WALK 0.55f
+static float web_moveX, web_moveY;
+
+extern "C" EMSCRIPTEN_KEEPALIVE void web_move( float x, float y ) {
+	web_moveX = Com_Clamp( -1.0f, 1.0f, x );
+	web_moveY = Com_Clamp( -1.0f, 1.0f, y );
+}
+
+extern "C" EMSCRIPTEN_KEEPALIVE void web_look( int dx, int dy ) {
+	if ( dx || dy ) {
+		Sys_QueEvent( 0, SE_MOUSE, dx, dy, 0, NULL );
+	}
+}
+
+extern "C" EMSCRIPTEN_KEEPALIVE void web_key( int key, int down ) {
+	if ( key > 0 && key < MAX_KEYS ) {
+		Sys_QueEvent( 0, SE_KEY, key, down ? qtrue : qfalse, 0, NULL );
+	}
+}
+
+extern "C" EMSCRIPTEN_KEEPALIVE void web_cmd( const char *text ) {
+	Cbuf_AddText( text );
+	Cbuf_AddText( "\n" );
+}
+
+#define WEB_STATE_COUNT 12
+extern "C" EMSCRIPTEN_KEEPALIVE int *web_state( void ) {
+	static int st[WEB_STATE_COUNT];
+	const playerState_t *ps = &cl.snap.ps;
+	const bool valid = cls.state == CA_ACTIVE && cl.snap.valid;
+	st[0] = cls.state;
+	st[1] = Key_GetCatcher();
+	st[2] = valid;
+	st[3] = valid ? ps->stats[4] : 0;               // STAT_WEAPONS: bit per WP_* index
+	st[4] = valid ? ps->weapon : 0;
+	st[5] = valid ? ps->fd.forcePowersKnown : 0;    // bit per FP_* index
+	st[6] = valid ? ps->fd.forcePowerSelected : 0;
+	st[7] = valid ? ps->persistant[3] : 0;          // PERS_TEAM (3 = spectator)
+	st[8] = valid ? ps->stats[0] : 0;               // STAT_HEALTH
+	st[9] = valid ? ps->pm_type : 0;
+	st[10] = valid ? ps->fd.saberAnimLevel : 0;
+	st[11] = valid ? ps->fd.forcePower : 0;
+	return st;
+}
+
+static void CL_WebMove( usercmd_t *cmd ) {
+	const float mag = sqrtf( web_moveX * web_moveX + web_moveY * web_moveY );
+	if ( mag < 0.05f ) {
+		return;
+	}
+	if ( mag < WEB_WALK ) {
+		cmd->buttons |= BUTTON_WALKING;
+	}
+	// full speed in the stick's direction; walking is limited by BUTTON_WALKING
+	cmd->forwardmove = ClampChar( cmd->forwardmove + (int)( 127.0f * web_moveY / mag ) );
+	cmd->rightmove = ClampChar( cmd->rightmove + (int)( 127.0f * web_moveX / mag ) );
+}
+#endif
+
 /*
 =================
 CL_CreateCmd
@@ -1351,6 +1427,11 @@ usercmd_t CL_CreateCmd( void ) {
 
 	// get basic movement from joystick
 	CL_JoystickMove( &cmd );
+
+#ifdef __EMSCRIPTEN__
+	// touch stick / gamepad from the browser
+	CL_WebMove( &cmd );
+#endif
 
 	// check to make sure the angles haven't wrapped
 	if ( cl.viewangles[PITCH] - oldAngles[PITCH] > 90 ) {

@@ -63,6 +63,11 @@ podman run --rm -p 8080:8080 -e JKA_PASSWORD=secret -v ./data:/data:Z jka-mp
   toggles it.
 - Phone mode: a context with `isMobile: true, hasTouch: true` and a landscape viewport (e.g. 915×412)
   is detected automatically; `?mobile` forces it in any context. `?timer` bypasses the 30 fps cap.
+- Touch tests: use a context with `hasTouch: true` but *without* `isMobile`, plus `?mobile`, and send
+  touches with CDP `Input.dispatchTouchEvent`. With `isMobile` the pointer events report wrong
+  coordinates (screen center, or rotated after `setViewportSize`).
+- A fake gamepad (`navigator.getGamepads` override) needs `id`, `index` and `mapping`, otherwise
+  Emscripten's SDL joystick code throws and stops the main loop.
 - Headless mouse clicks do not move the in-game UI cursor. Use the console instead: `~`, `team free`,
   `say …`.
 - `fly logs` shows `ClientConnect`, `ChangeTeam` and `say:` lines from the dedicated server.

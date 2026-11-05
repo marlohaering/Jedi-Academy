@@ -44,5 +44,5 @@ cmake --build "$BUILD" -j"$(nproc)"
 
 mkdir -p "$DIST"
 cp "$BUILD"/codemp/openjk_mp.{js,wasm} "$DIST/" 2>/dev/null || cp "$BUILD"/openjk_mp.{js,wasm} "$DIST/"
-[ -f "$HERE/shell-mp/index.html" ] && cp "$HERE/shell-mp/index.html" "$DIST/index.html"
+cp "$HERE"/shell-mp/*.html "$HERE"/shell-mp/*.js "$DIST/"
 echo "Done: $DIST"

@@ -27,6 +27,11 @@
   #log { position:fixed; left:0; right:0; bottom:0; max-height:35vh; overflow:auto; margin:0; padding:6px 10px;
     font:11px/1.35 ui-monospace, monospace; background:rgba(0,0,0,.8); color:#9fb; z-index:3; display:none; white-space:pre-wrap; }
   #log.show { display:block; }
+  /* phones: landscape only (web/MOBILE.md) */
+  #rotate { position:fixed; inset:0; z-index:5; display:none; align-items:center; justify-content:center;
+    background:var(--bg); color:var(--fg); font-size:18px; text-align:center; padding:0 24px; }
+  @media (orientation: portrait) { body.mobile #rotate { display:flex; } }
+  body.mobile #keys { display:none; }
 </style>
 </head>
 <body>
@@ -39,11 +44,12 @@
     <progress id="progress" max="1" value="0"></progress>
     <div><input id="name" maxlength="31" placeholder="Your name" autocomplete="nickname"></div>
     <button id="play" disabled>Join game</button>
-    <p style="margin-top:18px"><kbd>WASD</kbd> move · <kbd>Mouse</kbd> look · <kbd>Click</kbd> attack ·
+    <p id="keys" style="margin-top:18px"><kbd>WASD</kbd> move · <kbd>Mouse</kbd> look · <kbd>Click</kbd> attack ·
       <kbd>Space</kbd> jump · <kbd>Tab</kbd> scores · <kbd>T</kbd> chat · <kbd>~</kbd> console · <kbd>F9</kbd> log</p>
   </div>
 </div>
 <pre id="log"></pre>
+<div id="rotate">Turn your phone sideways to play.</div>
 <script>
 (function () {
   const statusEl = document.getElementById('status');
@@ -57,6 +63,7 @@
   // Phones get their own slim pk3, resolution and frame cap (web/MOBILE.md). ?mobile / ?desktop override.
   const MOBILE = params.has('mobile') ? true : params.has('desktop') ? false
     : matchMedia('(pointer: coarse)').matches && navigator.maxTouchPoints > 0;
+  if (MOBILE) document.body.classList.add('mobile');
 
   try { nameEl.value = localStorage.getItem('jka-name') || ''; } catch (e) {}
   if (params.has('log')) logEl.classList.add('show');
@@ -221,11 +228,13 @@
                   '+connect', 'jka-server:29070'];
     Module.callMain(args);
     Module.canvas.focus();
+    WebInput.init(Module, MOBILE);   // touch overlay on phones, gamepad everywhere (touch.js)
   }
   playBtn.addEventListener('click', start);
   nameEl.addEventListener('keydown', e => { if (e.key === 'Enter') start(); });
 })();
 </script>
+<script src="touch.js"></script>
 <script async src="openjk_mp.js"></script>
 </body>
 </html>

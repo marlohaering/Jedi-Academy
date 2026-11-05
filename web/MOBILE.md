@@ -1,6 +1,7 @@
 # Mobile concept: the MP client on phones
 
-Status: concept agreed 2026-11-06. P1 is implemented (see "P1 results"); P2–P4 are open.
+Status: concept agreed 2026-11-06. P1 and P2 are implemented (see "P1 results", "P2 results"); P3 and P4 are
+open.
 
 Goal: a phone player opens `jka.haering.me` in the browser and plays on the same FFA server as desktop
 players.
@@ -96,11 +97,20 @@ override it, so mobile mode can be tested on desktop too.
 
 ### Input
 
-- A JS/HTML **touch overlay** on top of the canvas calls a small exported C API:
-  - `web_move(x, y)`: analog move stick, written into `cl.joystickAxis[]`.
-  - `web_look(dx, dy)`: look-drag, sent through `CL_MouseEvent`.
-  - `web_key(key, down)`: buttons, as key events, so the normal binds apply.
-- The browser **Gamepad API** feeds the same functions from the same JS layer.
+- A JS/HTML **touch overlay** (`shell-mp/touch.js`) on top of the canvas calls a small exported C API
+  (`codemp/client/cl_input.cpp`, under `__EMSCRIPTEN__`):
+  - `web_move(x, y)`: analog move, added to the usercmd in `CL_CreateCmd`. Below 55 % deflection it sets
+    `BUTTON_WALKING`. The stock joystick path (`cl.joystickAxis[]`) is not used, because
+    `CL_JoystickMove` turns and pitches with its axes instead of moving.
+  - `web_look(dx, dy)`: look delta, queued as a mouse event (so menus get it too).
+  - `web_key(key, down)`: key events. `web_cmd(text)`: console commands such as `+attack`; the buttons
+    use these, so they do not depend on the player's binds.
+  - `web_state()`: player state for the overlay (connection, key catcher, weapons, known force powers,
+    team, …).
+- The browser **Gamepad API** feeds the same functions from the same JS layer, in both modes. Standard
+  mapping: left stick move, right stick look, RT attack, LT alt, A jump, B crouch, X use, Y force,
+  LB / D-pad left-right cycle the force power, RB / D-pad down next / previous weapon, D-pad up saber
+  style, Back scores, Start menu. Pressing a pad button hides the touch overlay until the next touch.
 - Rejected:
   - SDL finger events in `sdl_input.cpp`: harder to style, and the overlay would be duplicated.
   - Pure console commands such as `+forward`: digital movement only.
@@ -110,13 +120,17 @@ override it, so mobile mode can be tested on desktop too.
   - **Right half:** dragging aims, including drags that start on a button, so attacking and aiming
     work at the same time.
   - **Right-thumb cluster:** Attack (hold), Alt-attack, Jump, Crouch.
-  - **Upper right:** Force: tap uses the selected power, long press opens a radial to pick one.
-    Weapon: tap cycles, long press opens a radial. Saber style is in the radial too.
+  - **Upper right:** Force: tap uses the selected power, holding it holds grip, lightning and drain.
+    The chip above the button shows the selected power, and tapping it opens the force radial.
+    (Changed from "long press opens the radial": a long press is needed for the hold powers.)
+    Weapon: tap cycles, long press opens a radial with the owned weapons and "Saber style".
+  - Radials: slide onto an item and release, or tap an item. A tap outside closes them.
   - **Top left:** Use/Action, Menu, Scoreboard.
 
 ### Menus and chat
 
-- Phone players never see the original UI menus. On connect the shell sends `team free`.
+- Phone players never see the original UI menus. On connect the shell sends `team free` and closes the
+  menu (pulled forward into P2, because phones cannot get into a match otherwise).
 - An **HTML pause menu**, opened with the Menu button, covers team/spectate, saber style, force and
   weapon selection, quick-chat, settings, the scoreboard and disconnect. Every action is a console
   command.
@@ -142,7 +156,7 @@ its cheap part (resolution, frame cap) moved into P1.
 | Phase | Content | Done when |
 |---|---|---|
 | **P1** Memory and resolution ✅ | No double copy. Hunk size and memory cap. `repack.py profile=mobile`. Manifest variant. Mobile resolution and frame cap | Loads and runs on the 9a (still without controls). Pk3 ≤ 200 MB. Tab memory and frame time measured |
-| **P2** Input | C API `web_move` / `web_look` / `web_key`. Touch overlay layout v1. Gamepad API | Move, aim, attack, jump, force and weapon all work by touch and gamepad |
+| **P2** Input ✅ | C API `web_move` / `web_look` / `web_key`. Touch overlay layout v1. Gamepad API | Move, aim, attack, jump, force and weapon all work by touch and gamepad |
 | **P3** Menus and chat | Auto `team free`. HTML pause menu. Quick-chat and keyboard chat | A full match from join to disconnect without the original menus |
 | **P4** PWA and polish | Manifest, persistent storage, wake lock, orientation screen, audio unlock, settings | Acceptance bar met. iOS pass on a real device |
 
@@ -164,6 +178,20 @@ container. These are not Pixel 9a numbers yet.
 - Bug found and fixed: rounding the render width *up* (915 → 916 px) made the window larger than the
   screen, and SDL then found no display mode, so GL init failed. The shell rounds down.
 - Still open for P1 on the real device: tab memory and frame time on the Pixel 9a (Brave, Vanadium).
+
+## P2 results (2026-11-06)
+
+Tested headless (touch emulation, fake gamepad) against a local container:
+
+- Auto-join, move stick, look drag (also with two fingers at once), attack, force (power used,
+  energy drops), weapon radial (Saber, Pistol, Saber style), force radial pick: all work. Gamepad
+  move, look and buttons work on desktop. The touch overlay stays hidden on desktop.
+- Bug found on the Pixel 9a and fixed: started in portrait, the landscape canvas was larger than
+  `screen.width`, SDL found no display mode, and GL init failed. The engine now continues without a mode
+  list in the browser (`shared/sdl/sdl_window.cpp`; the list only feeds the resolution menu). The
+  "turn your phone sideways" screen was pulled forward from P4.
+- Known issues: the buttons overlap the HUD corners (health and force/ammo). Sensitivity and button
+  sizes are untuned until tested on the phone.
 
 ## Open risks
 
