@@ -67,8 +67,10 @@ podman run --rm -p 8080:8080 -e JKA_PASSWORD=secret -v ./data:/data:Z jka-mp
 
 ## Gotchas
 
-- Hidden tabs pause `requestAnimationFrame`. The shell then drives `Com_Frame` from a Worker timer at
-  20 fps, otherwise queued snapshots flood cgame on return (`CG_ReadNextSnapshot: way out of range`).
+- `requestAnimationFrame` stops in hidden tabs, and also in windows covered by another app while
+  `document.hidden` stays false (Linux/Wayland). When rAF has been silent for 250 ms, the shell drives
+  `Com_Frame` from a Worker timer at 20 fps. Without it, queued snapshots flood cgame on return
+  (`CG_ReadNextSnapshot: way out of range`) and the server drops the client after `sv_timeout`.
 - All players reach `openjkded` from `127.0.0.1` through the gateway. Keep `g_antiFakePlayer 0` and
   `sv_pure 0` (clients use the repacked pk3).
 - Changing the map: edit `server.cfg`, and also the `map=` and `music=` arguments of `repack.py` in

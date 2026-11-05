@@ -58,30 +58,35 @@
   try { nameEl.value = localStorage.getItem('jka-name') || ''; } catch (e) {}
   if (params.has('log')) logEl.classList.add('show');
   window.alert = msg => { console.error('ALERT: ' + msg); log('ALERT: ' + msg); logEl.classList.add('show'); };
-  // Keep the engine's main loop running while the tab is hidden. Browsers pause requestAnimationFrame
-  // in hidden/occluded tabs, but the WebSocket keeps queuing server snapshots; on return the engine
-  // would swallow thousands at once ("CG_ReadNextSnapshot: way out of range") and the server would
-  // see no usercmds. While hidden, frames are driven by a Worker timer instead (worker timers are not
-  // throttled like main-thread ones). ?timer forces the timer always (headless testing).
+  // Keep the engine's main loop running when requestAnimationFrame stops: in hidden tabs, and also in
+  // windows that are merely covered by another app (on Linux/Wayland the compositor stops sending frame
+  // callbacks while document.visibilityState stays "visible"). The WebSocket keeps queuing server
+  // snapshots meanwhile; on return the engine would swallow thousands at once ("CG_ReadNextSnapshot:
+  // way out of range") and the server, getting no usercmds, drops us after sv_timeout. So a Worker timer
+  // (not throttled like main-thread timers) runs frames whenever rAF has been silent for STALL_MS.
+  // ?timer always uses the timer (headless Chrome may not fire rAF).
   {
     const realRAF = window.requestAnimationFrame.bind(window);
     const forceTimer = params.has('timer');
-    const HIDDEN_MS = 50;  // 20 fps in the background: drains packets and sends usercmds, little CPU
-    const useTimer = () => forceTimer || document.hidden;
-    let pending = null;
+    const TICK_MS = forceTimer ? 4 : 50;  // 20 fps fallback: drains packets and sends usercmds, little CPU
+    const STALL_MS = 250;
+    let pending = null, rafQueued = false, lastRAF = performance.now();
     const run = () => { const f = pending; pending = null; if (f) f(performance.now()); };
     const ticker = new Worker(URL.createObjectURL(new Blob(
-      ['let t=null;onmessage=e=>{clearInterval(t);t=e.data?setInterval(()=>postMessage(0),e.data):null}'],
-      { type: 'text/javascript' })));
-    ticker.onmessage = () => { if (useTimer()) run(); };
-    const viaRAF = () => realRAF(() => { if (!useTimer()) run(); });
-    window.requestAnimationFrame = cb => { pending = cb; if (!useTimer()) viaRAF(); return 0; };
-    const update = () => {
-      ticker.postMessage(useTimer() ? (forceTimer && !document.hidden ? 4 : HIDDEN_MS) : 0);
-      if (!useTimer() && pending) viaRAF();
+      ['onmessage=e=>setInterval(()=>postMessage(0),e.data)'], { type: 'text/javascript' })));
+    ticker.onmessage = () => {
+      if (pending && (forceTimer || document.hidden || performance.now() - lastRAF > STALL_MS)) run();
     };
-    document.addEventListener('visibilitychange', update);
-    update();
+    ticker.postMessage(TICK_MS);
+    window.requestAnimationFrame = cb => {
+      pending = cb;
+      // at most one real rAF outstanding, so a stalled window does not replay a burst of frames on return
+      if (!forceTimer && !rafQueued) {
+        rafQueued = true;
+        realRAF(() => { rafQueued = false; run(); lastRAF = performance.now(); });
+      }
+      return 0;
+    };
   }
 
   function log(text) {
