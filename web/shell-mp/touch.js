@@ -577,6 +577,22 @@
   }
   document.addEventListener('fullscreenchange', onFullscreenChange);
 
+  // Pointer lock (phones): in game SDL switches to relative mouse mode and asks for pointer lock on the
+  // canvas. Emscripten defers that request to the next input event that may carry it, in practice the
+  // compatibility mouseup of a tap in the pause menu. Chrome then locks the pointer to the canvas (toast
+  // "to show the cursor: switch to another app…") and the overlay stops getting usable touches. Looking
+  // goes through _web_look, not the SDL mouse, so phones never need the lock: the canvas gets a no-op
+  // requestPointerLock, and a lock from anywhere else is released at once.
+  function blockPointerLock(canvas) {
+    if (canvas) canvas.requestPointerLock = () => {};
+    document.addEventListener('pointerlockchange', () => {
+      const el = document.pointerLockElement;
+      if (!el) return;
+      note('pointer lock on <' + el.tagName.toLowerCase() + (el.id ? '#' + el.id : '') + '>, releasing it');
+      document.exitPointerLock();
+    });
+  }
+
   window.WebInput = {
     fullscreen,
     // touch: show the touch overlay (phones); the gamepad works in both modes
@@ -588,7 +604,7 @@
       addEventListener('pointerdown', () => { if (padActive && touchMode) padActive = false; }, true);
       setInterval(tick, 250);
       onFullscreenChange();
-      if (touch) initLifecycle();
+      if (touch) { initLifecycle(); blockPointerLock(module.canvas); }
     },
     frame(now) { if (M && M._web_move) pollPad(now); },
     // when the menu is open the overlay is hidden; P3 replaces the original menus
