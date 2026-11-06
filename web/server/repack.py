@@ -52,7 +52,7 @@ CODE_MODELS = (
 FILTERED = ('textures/', 'models/map_objects/')
 MOBILE_DROP = ('menu/video/', 'gfx/menus/planets/', 'models/players/_humanoid_')
 AMBIENCE_CODE = {'sound/ambience/spark5'}
-PATH_RE = re.compile(rb'(?:textures|models|gfx|env)/[\x21-\x7e]{1,60}')
+PATH_RE = re.compile(rb'(?:textures|models|gfx|env)/[\x21\x23-\x7e]{1,60}')  # no '"': entity values are quoted
 CODE_PK3 = ('jampgame', 'clientplugin', 'cgame', 'ui')
 
 
