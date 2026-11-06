@@ -7,6 +7,7 @@ primary_region = "fra"
 
 [env]
   DATA_DIR = "/data/base"
+  FS_GAME = "japlus"            # server mod in /data/japlus (falls back to base when missing)
 
 [http_service]
   internal_port = 8080
