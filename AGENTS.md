@@ -73,6 +73,8 @@ podman run --rm -p 8080:8080 -e JKA_PASSWORD=secret -v ./data:/data:Z jka-mp
 - Joining a game from headless Chrome on the desktop profile can stall in a reconnect loop while the
   map loads (SwiftShader is too slow); add `?mobile` (smaller textures) to get to `ClientBegin`. A
   persistent profile (`launchPersistentContext`) keeps the pk3 in Cache Storage between runs.
+- `?timer` runs frames back to back and starves IndexedDB: settings syncs never finish in game. Test
+  settings persistence without `?timer`; headless rAF then falls back to the 20 fps Worker timer.
 - Phone mode: a context with `isMobile: true, hasTouch: true` and a landscape viewport (e.g. 915×412)
   is detected automatically; `?mobile` forces it in any context. `?timer` bypasses the 30 fps cap.
 - Touch tests: use a context with `hasTouch: true` but *without* `isMobile`, plus `?mobile`, and send
@@ -99,8 +101,13 @@ podman run --rm -p 8080:8080 -e JKA_PASSWORD=secret -v ./data:/data:Z jka-mp
 - JA++ grappling hook (`japp_allowHook`, `+button12`) and `/jetpack` (`japp_allowJetpack`) work with
   the stock cgame, but no rope is drawn and the pull is not predicted (slight jitter); only the JA++ cgame
   fixes that. Hook pull speed and jetpack fuel are hardcoded. The shell binds F (hook) and J (jetpack)
-  through `web_bind_default` when those keys are unbound; the client config is not persisted, so this
-  runs every session.
+  through `web_bind_default` when those keys are unbound, so a player's own binds for F and J (kept in
+  the saved config) win.
+- Player settings persist per browser: the shell mounts the engine home `/home/web` as IDBFS (IndexedDB),
+  so `openjk.cfg` (binds, archived cvars; `base/` before joining, `japlus/` on the server) survives
+  reloads. A write syncs one second later, checked in the frame loop because main-thread timers get
+  throttled. Before `callMain` the shell strips every cvar it passes with `+set` (name, video mode,
+  networking) from the saved configs, so the name field and device settings win.
 - Changing the map: edit `server.cfg`. Every map the server can switch to must be in `CLIENT_MAPS` in
   `start.sh` (currently ffa1–5 + duel1–10; default map mp/duel1). `server/japp/scripts/duel.arena` marks the duel maps as FFA maps too, so JA++ `/ammap ffa mp/duelN` accepts them, otherwise browser players lack the bsp and textures.
 - `repack.py` must write directory entries into the pk3 (`models/players/`, …): the engine lists pk3
