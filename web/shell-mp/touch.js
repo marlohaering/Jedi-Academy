@@ -10,7 +10,9 @@
 // chip above it opens the force radial), Weapon (tap = next, long press = weapon radial with saber
 // styles), top left Use / Menu / Scores / fullscreen. Settings in localStorage 'jka-touch':
 // {size, opacity, look}. Menu (phones, P3): an HTML pause menu instead of the original UI menus, with
-// join/spectate, saber style, quick chat and typed chat, settings, name and leaving the match.
+// join/spectate, saber style, quick chat and typed chat, settings, name, character and leaving the match.
+// The character picker sets the "model" cvar (portraits: gateway /base/icon/<model>.jpg) and remembers
+// the choice in localStorage 'jka-model'; it is applied again on every join.
 (function () {
   'use strict';
   const WS = { state: 0, catcher: 1, valid: 2, weapons: 3, weapon: 4, forceKnown: 5, forceSel: 6,
@@ -109,6 +111,11 @@
   #pmenu label { display:flex; align-items:center; gap:10px; margin:4px 0; }
   #pmenu label span { width:96px; flex:none; color:#a9b6cc; }
   #pmenu input[type=range] { flex:1; accent-color:#4aa3ff; }
+  #pmenu .chars { display:grid; grid-template-columns:repeat(auto-fill, minmax(76px, 1fr)); gap:6px; }
+  #pmenu .chars button { margin:0; padding:4px 2px 6px; display:flex; flex-direction:column; align-items:center;
+    gap:3px; font-size:12px; line-height:1.15; }
+  #pmenu .chars img { width:56px; height:56px; border-radius:6px; background:#05070c; object-fit:cover; }
+  #pmenu .chars button.primary { border-color:#ffe81f; }
   #lost { position:fixed; inset:0; z-index:4; display:none; align-items:center; justify-content:center;
     flex-direction:column; gap:14px; background:rgba(5,7,12,.9); color:#d8e2f0; font:16px system-ui, sans-serif; }
   #lost.on { display:flex; }
@@ -341,6 +348,18 @@
 
   // ---------- pause menu (phones) ----------
   const QUICK_CHAT = ['gg', 'Nice!', 'Hi all', '1v1?', 'Sorry', 'Thanks', 'brb', 'lol'];
+  // [model, name]: every one has models/players/<model>/icon_default.jpg in the client pk3
+  const CHARACTERS = [
+    ['kyle', 'Kyle Katarn'], ['luke', 'Luke Skywalker'], ['jan', 'Jan Ors'], ['lando', 'Lando'],
+    ['rosh_penin', 'Rosh Penin'], ['alora', 'Alora'], ['tavion_new', 'Tavion'], ['desann', 'Desann'],
+    ['reborn', 'Reborn'], ['boba_fett', 'Boba Fett'], ['stormtrooper', 'Stormtrooper'], ['chewbacca', 'Chewbacca'],
+  ];
+  const DEFAULT_MODEL = 'kyle';
+  function savedModel() {
+    let m = null;
+    try { m = localStorage.getItem('jka-model'); } catch (e) {}
+    return CHARACTERS.some(c => c[0] === m) ? m : null;
+  }
   let menu, openedAt = 0;
   const clean = t => t.replace(/["\\;\n\r]/g, '').trim().slice(0, 150);
   function say(t) { t = clean(t); if (t) cmd('say "' + t + '"'); }
@@ -372,6 +391,10 @@
           <h2>&nbsp;</h2>
           <button data-a="leave">Leave match</button>
         </section>
+        <section style="flex-basis:100%">
+          <h2>Character</h2>
+          <div class="chars"></div>
+        </section>
       </div>`;
     // SDL listens for keys on window (bubbling) and would eat what is typed into the text fields
     for (const t of ['keydown', 'keyup', 'keypress']) menu.addEventListener(t, e => e.stopPropagation());
@@ -379,6 +402,13 @@
     for (const t of QUICK_CHAT) {
       const b = document.createElement('button'); b.textContent = t; b.dataset.a = 'quick';
       quick.appendChild(b);
+    }
+    const chars = menu.querySelector('.chars');
+    for (const [model, label] of CHARACTERS) {
+      const b = document.createElement('button'); b.dataset.a = 'model'; b.dataset.model = model;
+      const img = document.createElement('img'); img.src = 'base/icon/' + model + '.jpg'; img.alt = ''; img.loading = 'lazy';
+      b.append(img, label);
+      chars.appendChild(b);
     }
     const $ = id => menu.querySelector('#' + id);
     for (const k of ['look', 'size', 'opacity']) {
@@ -411,6 +441,10 @@
           if (n) { cmd('name "' + n + '"'); try { localStorage.setItem('jka-name', n); } catch (err) {} }
           nameEl.blur(); break;
         }
+        case 'model':
+          cmd('model "' + b.dataset.model + '"');
+          try { localStorage.setItem('jka-model', b.dataset.model); } catch (err) {}
+          closeMenu(); break;
         case 'leave': cmd('disconnect'); setTimeout(() => location.reload(), 300); break;
       }
     });
@@ -426,6 +460,8 @@
     releaseAll();
     try { menu.querySelector('#pm-name').value = localStorage.getItem('jka-name') || ''; } catch (e) {}
     markFps();
+    const model = savedModel() || DEFAULT_MODEL;
+    for (const b of menu.querySelectorAll('.chars button')) b.classList.toggle('primary', b.dataset.model === model);
     openedAt = performance.now();
     menu.classList.add('on');
   }
@@ -446,6 +482,8 @@
     // phones cannot use the original menus: join the game automatically once (P3 adds an HTML menu)
     if (touchMode && active && !joined) {
       joined = true;
+      const model = savedModel();
+      if (model) cmd('model "' + model + '"');
       if (st[WS.team] === TEAM_SPECTATOR) cmd('team free');
       if (st[WS.catcher] & KEYCATCH_UI) key(K_ESCAPE);
     }

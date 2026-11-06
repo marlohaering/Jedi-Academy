@@ -161,7 +161,7 @@ async def query_info():
     return dict(zip(parts[::2], parts[1::2]))
 
 
-_levelshots = {}
+_pk3_files = {}
 _map_titles = None
 
 
@@ -184,10 +184,10 @@ def map_title(mapname):
     return _map_titles.get(mapname.lower(), '')
 
 
-def levelshot(mapname):
-    """levelshots/<map>.jpg from the desktop client pk3, cached in memory"""
-    if mapname not in _levelshots:
-        want = f'levelshots/{mapname}.jpg'.lower()
+def pk3_file(path):
+    """a file from the desktop client pk3 (later pk3s win), cached in memory; None if missing"""
+    want = path.lower()
+    if want not in _pk3_files:
         data = None
         for p in pak_list(False):
             try:
@@ -197,8 +197,15 @@ def levelshot(mapname):
                             data = z.read(n)
             except (OSError, zipfile.BadZipFile):
                 pass
-        _levelshots[mapname] = data
-    return _levelshots[mapname]
+        _pk3_files[want] = data
+    return _pk3_files[want]
+
+
+async def pk3_jpg(path):
+    data = await asyncio.get_running_loop().run_in_executor(None, pk3_file, path)
+    if not data:
+        raise web.HTTPNotFound()
+    return web.Response(body=data, content_type='image/jpeg', headers={'Cache-Control': 'private, max-age=3600'})
 
 
 async def info(request):
@@ -218,10 +225,15 @@ async def levelshot_jpg(request):
     mapname = request.match_info['map']
     if '..' in mapname or not all(c.isalnum() or c in '/_-' for c in mapname):
         raise web.HTTPNotFound()
-    data = await asyncio.get_running_loop().run_in_executor(None, levelshot, mapname)
-    if not data:
+    return await pk3_jpg(f'levelshots/{mapname}.jpg')
+
+
+async def character_icon(request):
+    """portrait of a player model (phone character picker, shell-mp/touch.js)"""
+    model = request.match_info['model']
+    if not all(c.isalnum() or c == '_' for c in model):
         raise web.HTTPNotFound()
-    return web.Response(body=data, content_type='image/jpeg', headers={'Cache-Control': 'private, max-age=3600'})
+    return await pk3_jpg(f'models/players/{model}/icon_default.jpg')
 
 
 class UdpRelay(asyncio.DatagramProtocol):
@@ -284,6 +296,7 @@ def make_app():
         web.get('/base/manifest.json', manifest),
         web.get('/base/info.json', info),
         web.get('/base/levelshot/{map:.+}.jpg', levelshot_jpg),
+        web.get('/base/icon/{model}.jpg', character_icon),
         web.get('/base/{name}', pak),
         web.get('/', static), web.get('/{path:.+}', static),
     ])

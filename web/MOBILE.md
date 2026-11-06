@@ -213,6 +213,8 @@ fullscreen mode broke the overlay, and the page could not be installed.
   - Game: Resume, Join game (`team free`), Spectate (`team spectator`), Saber style.
   - Chat: eight quick-chat buttons, plus a text field that opens the phone keyboard. `"`, `\` and `;`
     are stripped before `say`.
+  - Character: twelve portraits (gateway `/base/icon/<model>.jpg` from the client pk3). A tap sends
+    `model "<name>"` and stores it in `localStorage 'jka-model'`; it is set again on every join.
   - Settings: look speed, button size, opacity (live, `localStorage 'jka-touch'`), 30/60 fps
     (`'jka-fps'`, applied at once through `setMaxFps`), rename (`name`, `'jka-name'`).
   - Leave match: `disconnect`, then reload to the start screen.

@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
-"""Build a slimmer client pk3 for browser players of the ffa3 FFA server.
+"""Build a slimmer client pk3 for browser players of the FFA server.
 
 The retail assets0-3.pk3 (1.2 GB) contain a lot that a multiplayer client on one map never
 touches. This merges them (later pk3s override earlier ones, as in the engine) into one
 pk3 without:
   - video/                  cinematics (single player)
   - sound/chr_d|chr_e|chr_f German/French/Spanish dialogue
-  - maps/* except the served map (bsp + nav files of every other level)
-  - music/* except MP music and the served map's music
+  - maps/* except the served maps (bsp + nav files of every other level)
+  - music/* except MP music, the folder of each served map's "music" track (the engine plays the
+    whole folder as dynamic music: explore, action, transitions; ext_data/dms.dat) and music=
+  - textures/ and models/map_objects/ that neither the served maps, the game code nor a global
+    shader reference (the walls and props of the other levels)
 Other pk3s in the base dir (e.g. japlus_gla_anims.pk3) and the asset pk3s of a server mod
 directory (mod=/data/japlus) are merged on top, in the engine's search order. Pk3s with game
 code (jampgame*, clientplugin*, cgame*, ui*) are skipped: the browser client has its own
@@ -15,8 +18,6 @@ cgame/ui compiled in and cannot load native DLLs.
 The dedicated server keeps reading the original files; the client needs sv_pure 0.
 
 profile=mobile (phones, see web/MOBILE.md) additionally
-  - keeps textures/ and models/map_objects/ only where the served map, the game code or a
-    global shader references them
   - scales images down to at most MOBILE_MAX px (fonts and lightmaps untouched); opaque
     TGAs become JPEGs, the others PNGs (the engine finds images under any extension)
   - converts WAVs to 22 kHz mono
@@ -27,7 +28,7 @@ profile=mobile (phones, see web/MOBILE.md) additionally
   - nomusic=1 also drops all music
 Needs Pillow (python3-pil).
 
-usage: repack.py <base dir> <output.pk3> [map=mp/ffa3] [music=music/t1_sour] [mod=<mod dir>]
+usage: repack.py <base dir> <output.pk3> [map=mp/ffa3,mp/duel1,...] [music=music/<dir>,...] [mod=<mod dir>]
                  [profile=desktop|mobile] [nomusic=1]
 """
 import io
@@ -55,7 +56,7 @@ PATH_RE = re.compile(rb'(?:textures|models|gfx|env)/[\x21-\x7e]{1,60}')
 CODE_PK3 = ('jampgame', 'clientplugin', 'cgame', 'ui')
 
 
-def keep(name, map_name, music_dirs):
+def keep(name, maps, music):
     n = name.lower()
     if n.endswith('/') or n.endswith(('.dll', '.so', '.dylib', 'thumbs.db')):
         return False
@@ -64,9 +65,9 @@ def keep(name, map_name, music_dirs):
     if n.startswith(('sound/chr_d/', 'sound/chr_e/', 'sound/chr_f/')):
         return False
     if n.startswith('maps/'):
-        return os.path.splitext(n)[0] == 'maps/' + map_name
+        return os.path.splitext(n)[0] in {'maps/' + m for m in maps}
     if n.startswith('music/'):
-        return n.startswith(tuple(d + '/' for d in music_dirs))
+        return music is None or n.startswith(tuple(music))
     return True
 
 
@@ -114,9 +115,9 @@ def entities(bsp):
     return bsp[ofs:ofs + length].decode('latin-1')
 
 
-def needed_ambience(read, names, bsp):
-    """sound/ambience stems referenced by the map's ambient sets or by effects"""
-    sets = set(re.findall(r'"soundset"\s+"([^"]+)"', entities(bsp).lower()))
+def needed_ambience(read, names, bsps):
+    """sound/ambience stems referenced by the maps' ambient sets or by effects"""
+    sets = {s for bsp in bsps for s in re.findall(r'"soundset"\s+"([^"]+)"', entities(bsp).lower())}
     out = set(AMBIENCE_CODE)
     if 'sound/sound.txt' in names:
         text = read('sound/sound.txt').decode('latin-1').lower()
@@ -130,8 +131,8 @@ def needed_ambience(read, names, bsp):
     return {os.path.splitext(s)[0] for s in out}
 
 
-def needed_stems(read, names, map_name):
-    """stems under textures/ and models/map_objects/ the mobile client needs"""
+def needed_stems(read, names, maps):
+    """stems under textures/ and models/map_objects/ the client needs on these maps"""
     shaders = {}
     global_refs = set()
     for n in names:
@@ -143,7 +144,7 @@ def needed_stems(read, names, map_name):
                     global_refs |= imgs
         elif n.endswith(('.efx', '.skin', '.menu', '.sab', '.npc', '.veh', '.wpn')):
             global_refs |= {stem(m.decode('latin-1')) for m in PATH_RE.findall(read(n))}
-    refs = {stem(m.decode('latin-1')) for m in PATH_RE.findall(read('maps/' + map_name + '.bsp'))}
+    refs = {stem(m.decode('latin-1')) for mp in maps for m in PATH_RE.findall(read('maps/' + mp + '.bsp'))}
     refs |= global_refs
     refs |= {stem(n) for n in names if n.startswith(CODE_MODELS)}
     out, todo = set(), list(refs)
@@ -239,11 +240,8 @@ def shrink_wav(data):
 def main():
     src, out = sys.argv[1], sys.argv[2]
     opts = dict(a.split('=', 1) for a in sys.argv[3:])
-    map_name = opts.get('map', 'mp/ffa3').lower()
-    music_dirs = ['music/mp'] + [d.lower() for d in opts.get('music', 'music/t1_sour').split(',')]
+    maps = [m.strip().lower() for m in opts.get('map', 'mp/ffa3').split(',') if m.strip()]
     mobile = opts.get('profile', 'desktop') == 'mobile'
-    if mobile and opts.get('nomusic') == '1':
-        music_dirs = []
 
     def pk3s(d):
         # the engine loads a directory's pk3s in name order, later ones override earlier ones
@@ -251,24 +249,44 @@ def main():
                 if f.lower().endswith('.pk3') and not f.lower().startswith(CODE_PK3)]
     paks = pk3s(src) + (pk3s(opts['mod']) if opts.get('mod') and os.path.isdir(opts['mod']) else [])
     zips = {pak: zipfile.ZipFile(pak) for pak in paks}
+
+    def read(n):
+        pak, orig = chosen[n]
+        return zips[pak].read(orig)
+
     chosen = {}  # lowercase name -> (pak, original name); later paks win
     for pak in paks:
         for info in zips[pak].infolist():
-            if keep(info.filename, map_name, music_dirs):
+            if keep(info.filename, maps, None):  # music is filtered below, once the bsps are known
                 chosen[info.filename.lower()] = (pak, info.filename)
+    missing = [m for m in maps if 'maps/' + m + '.bsp' not in chosen]
+    if missing:
+        sys.exit('maps not found: ' + ', '.join(missing))
+    bsps = [read('maps/' + m + '.bsp') for m in maps]
 
-    if mobile:
-        def read(n):
-            pak, orig = chosen[n]
-            return zips[pak].read(orig)
-        need = needed_stems(read, set(chosen), map_name)
-        ambience = needed_ambience(read, set(chosen), read('maps/' + map_name + '.bsp'))
-        for n in list(chosen):
-            parts = n.split('/')
-            if (n.startswith(FILTERED) and stem(n) not in need) or n.startswith(MOBILE_DROP) \
-                    or (n.startswith('sound/ambience/') and os.path.splitext(n)[0] not in ambience) \
-                    or (parts[:2] == ['sound', 'chars'] and len(parts) == 4):
-                del chosen[n]
+    # music folders: MP menu music, the folder of every map's worldspawn "music" track, music=
+    music = {'music/mp/'} | {d.strip().lower().rstrip('/') + '/' for d in opts.get('music', '').split(',') if d.strip()}
+    for bsp in bsps:
+        m = re.search(r'"music"\s+"([^"]+)"', entities(bsp).split('}', 1)[0], re.I)
+        if m:
+            for track in m.group(1).lower().replace('\\', '/').split():  # "<intro> <loop>"
+                music.add(os.path.dirname(track) + '/')
+    if mobile and opts.get('nomusic') == '1':
+        music = set()
+    for n in list(chosen):
+        if not keep(n, maps, music):
+            del chosen[n]
+
+    need = needed_stems(read, set(chosen), maps)
+    ambience = needed_ambience(read, set(chosen), bsps) if mobile else None
+    for n in list(chosen):
+        parts = n.split('/')
+        if n.startswith(FILTERED) and stem(n) not in need:
+            del chosen[n]
+        elif mobile and (n.startswith(MOBILE_DROP)
+                         or (n.startswith('sound/ambience/') and os.path.splitext(n)[0] not in ambience)
+                         or (parts[:2] == ['sound', 'chars'] and len(parts) == 4)):
+            del chosen[n]
 
     tmp = out + '.tmp'
     total = 0
@@ -290,6 +308,16 @@ def main():
                 zi.compress_type = method
                 dst.writestr(zi, data)
                 total += 1
+        # The engine lists subdirectories of a pk3 only from explicit directory entries
+        # (FS_GetFileList(path, "/"), e.g. models/players/ for the UI's character lists).
+        # keep() skips the originals, so write one for every directory that still holds files.
+        dirs = {}
+        for _, orig in chosen.values():
+            for i, c in enumerate(orig):
+                if c == '/':
+                    dirs.setdefault(orig[:i + 1].lower(), orig[:i + 1])
+        for d in sorted(dirs.values()):
+            dst.writestr(zipfile.ZipInfo(d), b'')
     os.replace(tmp, out)
     print(f'{out}: {total} files, {os.path.getsize(out) / 1e6:.0f} MB')
 

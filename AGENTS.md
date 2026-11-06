@@ -84,8 +84,10 @@ podman run --rm -p 8080:8080 -e JKA_PASSWORD=secret -v ./data:/data:Z jka-mp
   `FS_GAME=japlus` in `fly.toml`). Behind the gateway every player is `127.0.0.1`, so
   `japp_maxConnPerIP` is raised in `server.cfg`. Passwords live on the volume only:
   `/data/base/secrets.cfg` (rcon) and `/data/home/japlus/admins.json` (JA++ admin accounts).
-- Changing the map: edit `server.cfg`, and also the `map=` and `music=` arguments of `repack.py` in
-  `start.sh`.
+- Changing the map: edit `server.cfg`. Every map the server can switch to must be in `CLIENT_MAPS` in
+  `start.sh` (currently ffa3 + duel1–10), otherwise browser players lack the bsp and textures.
+- `repack.py` must write directory entries into the pk3 (`models/players/`, …): the engine lists pk3
+  subdirectories only from those, and the UI's character lists stay empty without them.
 - Rendering: Regal never uploads client-side vertex arrays for glDrawElements/glDrawArrays (its VAO
   shadow buffers stay empty, so batched draws come out black). `rd-vanilla/tr_webgl_arrays.cpp`
   intercepts the `qgl*Pointer`/`qglDraw*` calls (macros at the end of `qgl.h`), streams the arrays into

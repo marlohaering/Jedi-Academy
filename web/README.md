@@ -41,11 +41,12 @@ Browser                                  fly.io machine (jka-web-ffa, fra)
   its password check is the only way in. Without a valid cookie the page, the game data and the
   WebSocket all return 401.
 * **Client and server use the same OpenJK version** (commit `260c59c`), so the game logic matches.
-* **Player download:** `server/repack.py` builds one slim `jka-mp.pk3` (≈780 MB instead of 1.2 GB) for the
-  browsers at container start. It leaves out cinematics, non-English dialogue, every map except ffa3 and
-  single-player music. The browser keeps it in Cache Storage, so it is only downloaded once. The server
-  itself uses the original pk3s (`sv_pure 0`).
-* **Phones** get `jka-mp-mobile.pk3` (≈130 MB: only what ffa3 needs, images ≤ 256 px), built in the
+* **Player download:** `server/repack.py` builds one slim `jka-mp.pk3` (≈470 MB instead of 1.2 GB) for the
+  browsers at container start. It contains the maps in `CLIENT_MAPS` (`server/start.sh`: ffa3 and
+  duel1–10) and leaves out cinematics, non-English dialogue, all other maps with their textures and
+  props, and the music of other levels. The browser keeps it in Cache Storage, so it is only downloaded
+  once. The server itself uses the original pk3s (`sv_pure 0`).
+* **Phones** get `jka-mp-mobile.pk3` (≈170 MB: only what those maps need, images ≤ 256 px), built in the
   background at container start (`repack.py … profile=mobile`). Phones run at a smaller resolution and
   30 fps. `?mobile` / `?desktop` force the mode. They get touch controls (`shell-mp/touch.js`: move stick,
   look drag, buttons, radials) and join the game automatically. A gamepad works on phone and desktop.
@@ -120,8 +121,9 @@ fly logs                                      # server log: connects, team chang
 * **DNS:** `jka.haering.me` points at the app's fly IPs via A and AAAA records in Cloudflare (DNS only,
   not proxied). The TLS certificate comes from fly (`fly certs show jka.haering.me`).
 * **Server settings** (map, time and frag limits, slots) are in `server/server.cfg`.
-* **Changing the map:** set it in `server.cfg`, then adjust the `map=` and `music=` arguments of `repack.py`
-  in `server/start.sh`.
+* **Changing the map:** set it in `server.cfg`. Every map the server can switch to (rotation, vote, admin)
+  must be in `CLIENT_MAPS` in `server/start.sh`; the client pk3s are rebuilt when that list changes. Each
+  map's music folder is taken from its bsp.
 
 ### Notes and limits
 
@@ -132,7 +134,8 @@ fly logs                                      # server log: connects, team chang
 * First visit: the browser downloads ≈780 MB once. Later visits load from the browser cache.
 * Performance, measured on a laptop with Intel iGPU in Chrome: 60 fps with ~6 ms engine time per frame.
   With software rendering (no GPU): ~29 fps. From Hamburg the game round trip to fra is ~22 ms.
-* Phones: touch controls, an HTML pause menu with chat and settings, fullscreen and app install work. See
+* Phones: touch controls, an HTML pause menu with chat, settings and a character picker, fullscreen and
+  app install work. See
   [`MOBILE.md`](MOBILE.md) for what P4 still lacks.
 
 ---
