@@ -130,6 +130,7 @@
     logEl.textContent = lines.join('\n');
     logEl.scrollTop = logEl.scrollHeight;
   }
+  window.jkaLog = log;   // touch.js reports there too
   window.addEventListener('keydown', e => { if (e.key === 'F9') { logEl.classList.toggle('show'); e.preventDefault(); } });
 
   const mb = n => (n / 1048576).toFixed(0) + ' MB';
@@ -199,6 +200,8 @@
     const data = [];
     for (const p of manifest.paks) data.push(await loadPak(p, tick));
     paks = data;
+    // ask the browser not to evict the cached pk3 under storage pressure (iOS evicts after 7 days otherwise)
+    if (navigator.storage && navigator.storage.persist) navigator.storage.persist().then(ok => log('persistent storage: ' + ok)).catch(() => {});
     statusEl.textContent = 'Game data loaded.';
     maybeReady();
   })().catch(e => { statusEl.textContent = 'Failed to load game data: ' + e.message; });

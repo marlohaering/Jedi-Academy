@@ -1,7 +1,7 @@
 # Mobile concept: the MP client on phones
 
-Status: concept agreed 2026-11-06. P1–P3 are implemented (see the results sections below); P4 is partly done
-(PWA and fullscreen).
+Status: concept agreed 2026-11-06. P1–P4 are implemented (see the results sections below). Open: Pixel 9a
+measurements, control tuning, the iOS pass.
 
 Goal: a phone player opens `jka.haering.me` in the browser and plays on the same FFA server as desktop
 players.
@@ -158,7 +158,7 @@ its cheap part (resolution, frame cap) moved into P1.
 | **P1** Memory and resolution ✅ | No double copy. Hunk size and memory cap. `repack.py profile=mobile`. Manifest variant. Mobile resolution and frame cap | Loads and runs on the 9a (still without controls). Pk3 ≤ 200 MB. Tab memory and frame time measured |
 | **P2** Input ✅ | C API `web_move` / `web_look` / `web_key`. Touch overlay layout v1. Gamepad API | Move, aim, attack, jump, force and weapon all work by touch and gamepad |
 | **P3** Menus and chat ✅ | Auto `team free`. HTML pause menu. Quick-chat and keyboard chat | A full match from join to disconnect without the original menus |
-| **P4** PWA and polish | Manifest, persistent storage, wake lock, orientation screen, audio unlock, settings | Acceptance bar met. iOS pass on a real device |
+| **P4** PWA and polish ✅ (iOS pass open) | Manifest, persistent storage, wake lock, orientation screen, audio unlock, settings | Acceptance bar met. iOS pass on a real device |
 
 ## P1 results (2026-11-06)
 
@@ -227,6 +227,25 @@ fullscreen mode broke the overlay, and the page could not be installed.
   that works.
 - Tested headless against a local container: all menu actions arrive on the server (`say:`,
   `ChangeTeam`, `ClientRename`, `ClientDisconnect`).
+
+## P4 results (2026-11-06)
+
+PWA, fullscreen and the rotate screen: see above. Phone lifecycle in `touch.js`:
+
+- **Audio:** SDL resumes its AudioContext only on the first touch. The page now resumes it on every
+  touch and when the page becomes visible again (Android suspends it after the screen was off).
+- **Screen wake lock** while the page is visible, re-acquired after returning.
+- **Background:** after 2 minutes hidden (`?bgms=` overrides it for tests), the client disconnects
+  cleanly. On return, a screen says so and offers Reconnect (a reload, with the pk3 from the cache).
+  The same screen ("Connection lost") appears whenever the connection drops, instead of the original
+  main menu, which cannot be used by touch.
+- **Persistent storage:** `navigator.storage.persist()` once the pk3 is loaded.
+- **Unexpected fullscreen:** reported once from the phone: the overlay ended up in a corner and stopped
+  working, then fullscreen ended by itself. The same symptom appears when the *canvas* instead of the
+  page becomes the fullscreen element. The page now leaves such a fullscreen at once (the proper page
+  fullscreen remains) and notes it in the F9 log (`[touch] fullscreen on unexpected element …`). The
+  trigger is still unknown.
+- Tested headless: audio resume, wake lock, canvas-fullscreen safeguard, background disconnect + screen.
 
 ## Open risks
 

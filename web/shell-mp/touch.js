@@ -15,7 +15,7 @@
   'use strict';
   const WS = { state: 0, catcher: 1, valid: 2, weapons: 3, weapon: 4, forceKnown: 5, forceSel: 6,
                team: 7, health: 8, pmType: 9, saberStyle: 10, forcePower: 11 };
-  const CA_ACTIVE = 8, KEYCATCH_CONSOLE = 1, KEYCATCH_UI = 2, KEYCATCH_MESSAGE = 4, TEAM_SPECTATOR = 3;
+  const CA_DISCONNECTED = 1, CA_ACTIVE = 8, KEYCATCH_CONSOLE = 1, KEYCATCH_UI = 2, KEYCATCH_MESSAGE = 4, TEAM_SPECTATOR = 3;
   const K_ESCAPE = 27;
 
   // force powers by FP_* index: [label, command, hold?]
@@ -35,6 +35,7 @@
   };
   const weaponCmd = wp => 'weapon ' + (wp <= 3 ? 1 : wp - 2);
 
+  const note = t => { console.warn(t); if (window.jkaLog) jkaLog('[touch] ' + t); };
   let M = null, settings = { size: 1, opacity: 0.5, look: 2.5 };
   try { Object.assign(settings, JSON.parse(localStorage.getItem('jka-touch') || '{}')); } catch (e) {}
   let st = new Int32Array(12);
@@ -108,6 +109,11 @@
   #pmenu label { display:flex; align-items:center; gap:10px; margin:4px 0; }
   #pmenu label span { width:96px; flex:none; color:#a9b6cc; }
   #pmenu input[type=range] { flex:1; accent-color:#4aa3ff; }
+  #lost { position:fixed; inset:0; z-index:4; display:none; align-items:center; justify-content:center;
+    flex-direction:column; gap:14px; background:rgba(5,7,12,.9); color:#d8e2f0; font:16px system-ui, sans-serif; }
+  #lost.on { display:flex; }
+  #lost button { font:inherit; color:#d8e2f0; background:#0c1220; border:1px solid #4aa3ff; border-radius:8px;
+    padding:10px 22px; }
   `;
   // [id, label, diameter, position (right/bottom/left/top in px, scaled by --s)]
   const BUTTONS = [
@@ -125,7 +131,7 @@
   // held buttons: console commands sent on press (+) and release (-)
   const HOLD = { attack: 'attack', alt: 'altattack', jump: 'moveup', crouch: 'movedown', use: 'use', scores: 'scores' };
 
-  let root, base, knob, chip, radial;
+  let root, base, knob, chip, radial, lost;
   function build() {
     const style = document.createElement('style'); style.textContent = css; document.head.appendChild(style);
     root = document.createElement('div'); root.id = 'touch';
@@ -143,7 +149,10 @@
     knob = document.createElement('div'); knob.className = 'stick knob';
     root.append(base, knob);
     radial = document.createElement('div'); radial.id = 'radial';
-    document.body.append(root, radial, buildMenu());
+    lost = document.createElement('div'); lost.id = 'lost';
+    lost.innerHTML = '<div id="lost-msg">Connection lost.</div><button>Reconnect</button>';
+    lost.querySelector('button').addEventListener('click', () => location.reload());
+    document.body.append(root, radial, buildMenu(), lost);
     root.addEventListener('pointerdown', onDown);
     root.addEventListener('pointermove', onMove);
     root.addEventListener('pointerup', onUp);
@@ -441,12 +450,55 @@
       if (st[WS.catcher] & KEYCATCH_UI) key(K_ESCAPE);
     }
     // the original menus cannot be used by touch: close them if anything opens one (P3 menu replaces them)
-    if (touchMode && joined && (st[WS.catcher] & KEYCATCH_UI)) key(K_ESCAPE);
+    if (touchMode && active && joined && (st[WS.catcher] & KEYCATCH_UI)) key(K_ESCAPE);
+    // dropped by the server (timeout, kick, background disconnect): offer a reconnect (= reload, the pk3
+    // comes from the cache) instead of the original main menu
+    if (touchMode && joined && st[WS.state] <= CA_DISCONNECTED && !lost.classList.contains('on')) {
+      document.getElementById('lost-msg').textContent = leftInBackground
+        ? 'You left the match while the game was in the background.' : 'Connection lost.';
+      lost.classList.add('on');
+      menu.classList.remove('on');
+    }
     const blocked = st[WS.catcher] & (KEYCATCH_CONSOLE | KEYCATCH_UI | KEYCATCH_MESSAGE);
     const show = touchMode && active && !blocked && !padActive && !menu.classList.contains('on');
     root.classList.toggle('on', show);
     if (!show && ptrs.size) releaseAll();
     if (show) updateChip();
+  }
+
+  // ---------- phone lifecycle (P4) ----------
+  // Audio: SDL resumes its AudioContext only on the first touch; Android suspends it again after the screen
+  // was off or another app was in front.
+  function resumeAudio() {
+    const ctx = M && M.SDL2 && M.SDL2.audioContext;
+    if (ctx && ctx.state !== 'running') ctx.resume().catch(() => {});
+  }
+  // Screen wake lock while playing (released by the browser whenever the page is hidden)
+  let wakeLock = null;
+  async function keepAwake() {
+    if (!navigator.wakeLock || document.hidden || wakeLock) return;
+    try {
+      wakeLock = await navigator.wakeLock.request('screen');
+      wakeLock.addEventListener('release', () => { wakeLock = null; });
+      note('screen wake lock on');
+    } catch (e) { wakeLock = null; note('screen wake lock failed: ' + e.message); }
+  }
+  // Leave the match after BACKGROUND_MS in the background, so the player does not stand around in the
+  // arena and the server slot is freed (frozen tabs would time out after sv_timeout anyway)
+  const BACKGROUND_MS = +new URLSearchParams(location.search).get('bgms') || 120000;   // ?bgms= for tests
+  let hiddenTimer = null, leftInBackground = false;
+  function onVisibility() {
+    if (document.hidden) {
+      hiddenTimer = setTimeout(() => { leftInBackground = true; cmd('disconnect'); }, BACKGROUND_MS);
+    } else {
+      clearTimeout(hiddenTimer); hiddenTimer = null;
+      resumeAudio(); keepAwake();
+    }
+  }
+  function initLifecycle() {
+    for (const t of ['pointerup', 'touchend', 'keydown']) addEventListener(t, resumeAudio, true);
+    document.addEventListener('visibilitychange', onVisibility);
+    keepAwake();
   }
 
   // Fullscreen on the whole document (the overlay must stay visible), then lock landscape.
@@ -459,7 +511,16 @@
       .then(() => screen.orientation && screen.orientation.lock && screen.orientation.lock('landscape'))
       .catch(() => {});
   }
-  function onFullscreenChange() { if (root) root.classList.toggle('fs', isFullscreen()); }
+  function onFullscreenChange() {
+    // Something other than the page itself went fullscreen (seen once on the phone: the overlay ended up
+    // in a corner and stopped working). Undo it; the ⛶ button brings back the proper fullscreen.
+    const el = document.fullscreenElement;
+    if (el && el !== document.documentElement) {
+      note('fullscreen on unexpected element <' + el.tagName.toLowerCase() + (el.id ? '#' + el.id : '') + '>, leaving it');
+      document.exitFullscreen().catch(() => {});
+    }
+    if (root) root.classList.toggle('fs', isFullscreen());
+  }
   document.addEventListener('fullscreenchange', onFullscreenChange);
 
   window.WebInput = {
@@ -473,6 +534,7 @@
       addEventListener('pointerdown', () => { if (padActive && touchMode) padActive = false; }, true);
       setInterval(tick, 250);
       onFullscreenChange();
+      if (touch) initLifecycle();
     },
     frame(now) { if (M && M._web_move) pollPad(now); },
     // when the menu is open the overlay is hidden; P3 replaces the original menus
