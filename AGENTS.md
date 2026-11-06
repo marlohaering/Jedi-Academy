@@ -23,7 +23,16 @@ This repo has two parts:
 
 The toolchain is **Emscripten 2.0.11** exactly, because newer releases dropped Regal (OpenGL 1.x on
 WebGL). Its libjpeg port URL is dead and has to be patched to
-`https://www.ijg.org/files/jpegsrc.v9c.tar.gz`.
+`https://www.ijg.org/files/jpegsrc.v9c.tar.gz`, and its `HASH` to that file's sha512 (sha256
+`682aee46…a4a278d`).
+
+The toolchain is installed once in the **main checkout**, `~/repositories/Jedi-Academy/web/.toolchain/`
+(emsdk + a venv with cmake and ninja, listed in `.git/info/exclude`). Worktrees use it from there:
+
+```sh
+T=~/repositories/Jedi-Academy/web/.toolchain
+source $T/emsdk/emsdk_env.sh && export PATH=$T/venv/bin:$PATH
+```
 
 ```sh
 source /path/to/emsdk/emsdk_env.sh                 # plus cmake + ninja on PATH
@@ -84,8 +93,13 @@ podman run --rm -p 8080:8080 -e JKA_PASSWORD=secret -v ./data:/data:Z jka-mp
   `FS_GAME=japlus` in `fly.toml`). Behind the gateway every player is `127.0.0.1`, so
   `japp_maxConnPerIP` is raised in `server.cfg`. Passwords live on the volume only:
   `/data/base/secrets.cfg` (rcon) and `/data/home/japlus/admins.json` (JA++ admin accounts).
+- JA++ grappling hook (`japp_allowHook`, `+button12`) and `/jetpack` (`japp_allowJetpack`) work with
+  the stock cgame, but no rope is drawn and the pull is not predicted (slight jitter); only the JA++ cgame
+  fixes that. Hook pull speed and jetpack fuel are hardcoded. The shell binds F (hook) and J (jetpack)
+  through `web_bind_default` when those keys are unbound; the client config is not persisted, so this
+  runs every session.
 - Changing the map: edit `server.cfg`. Every map the server can switch to must be in `CLIENT_MAPS` in
-  `start.sh` (currently ffa3 + duel1–10), otherwise browser players lack the bsp and textures.
+  `start.sh` (currently ffa3 + duel1–10; default map mp/duel3), otherwise browser players lack the bsp and textures.
 - `repack.py` must write directory entries into the pk3 (`models/players/`, …): the engine lists pk3
   subdirectories only from those, and the UI's character lists stay empty without them.
 - Rendering: Regal never uploads client-side vertex arrays for glDrawElements/glDrawArrays (its VAO

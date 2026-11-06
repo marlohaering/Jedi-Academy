@@ -3,12 +3,14 @@
 // Talks to the engine through the exported C API in codemp/client/cl_input.cpp:
 //   _web_move(x, y)  analog move (-1..1)     _web_look(dx, dy)  look delta (mouse path)
 //   _web_key(k, d)   key event               web_cmd(text)      console command (via ccall)
-//   _web_state()     -> int[12] player state (see WS below)
+//   _web_state()     -> int[13] player state (see WS below)
 //
 // Layout v1 (fixed): left part = floating move stick, right part = look-drag (also drags that start on
 // a button), right-thumb cluster attack / alt / jump / crouch, Force (tap/hold = selected power, the
 // chip above it opens the force radial), Weapon (tap = next, long press = weapon radial with saber
-// styles), top left Use / Menu / Scores / fullscreen. Settings in localStorage 'jka-touch':
+// styles), Hook (hold = JA++ grappling hook, +button12), Jet (gets the JA++ jetpack with /jetpack if the
+// player has none, then +use, which starts/stops it in the air), top left Use / Menu / Scores / fullscreen.
+// Desktop and phone: F = hook and J = jetpack are bound once per session when those keys are unbound. Settings in localStorage 'jka-touch':
 // {size, opacity, look}. Menu (phones, P3): an HTML pause menu instead of the original UI menus, with
 // join/spectate, saber style, quick chat and typed chat, settings, name, character and leaving the match.
 // The character picker sets the "model" cvar (portraits: gateway /base/icon/<model>.jpg) and remembers
@@ -16,7 +18,8 @@
 (function () {
   'use strict';
   const WS = { state: 0, catcher: 1, valid: 2, weapons: 3, weapon: 4, forceKnown: 5, forceSel: 6,
-               team: 7, health: 8, pmType: 9, saberStyle: 10, forcePower: 11 };
+               team: 7, health: 8, pmType: 9, saberStyle: 10, forcePower: 11, holdables: 12 };
+  const HI_JETPACK = 7;
   const CA_DISCONNECTED = 1, CA_ACTIVE = 8, KEYCATCH_CONSOLE = 1, KEYCATCH_UI = 2, KEYCATCH_MESSAGE = 4, TEAM_SPECTATOR = 3;
   const K_ESCAPE = 27;
 
@@ -40,14 +43,14 @@
   const note = t => { console.warn(t); if (window.jkaLog) jkaLog('[touch] ' + t); };
   let M = null, settings = { size: 1, opacity: 0.5, look: 2.5 };
   try { Object.assign(settings, JSON.parse(localStorage.getItem('jka-touch') || '{}')); } catch (e) {}
-  let st = new Int32Array(12);
+  let st = new Int32Array(13);
   let forceSel = null;   // FP index chosen in the radial (JS side, independent of the engine's selection)
 
   const cmd = t => M.ccall('web_cmd', null, ['string'], [t]);
   const key = k => { M._web_key(k, 1); M._web_key(k, 0); };
   function readState() {
     const p = M._web_state() >> 2;
-    st = M.HEAP32.slice(p, p + 12);
+    st = M.HEAP32.slice(p, p + 13);
     return st;
   }
   const has = (mask, bit) => (mask >>> bit) & 1;
@@ -130,13 +133,15 @@
     ['crouch', 'Crouch', 58, { right: 130, bottom: 96 }],
     ['force', 'Force', 62, { right: 126, bottom: 176 }],
     ['weapon', 'Weapon', 56, { right: 44, bottom: 230 }],
+    ['hook', 'Hook', 58, { right: 212, bottom: 52 }],
+    ['jet', 'Jet', 54, { right: 214, bottom: 136 }],
     ['use', 'Use', 54, { left: 16, top: 16 }],
     ['menu', 'Menu', 54, { left: 80, top: 16 }],
     ['scores', 'Scores', 54, { left: 144, top: 16 }],
     ['full', '⛶', 54, { left: 208, top: 16 }],
   ];
   // held buttons: console commands sent on press (+) and release (-)
-  const HOLD = { attack: 'attack', alt: 'altattack', jump: 'moveup', crouch: 'movedown', use: 'use', scores: 'scores' };
+  const HOLD = { attack: 'attack', alt: 'altattack', jump: 'moveup', crouch: 'movedown', use: 'use', scores: 'scores', hook: 'button12' };
 
   let root, base, knob, chip, radial, lost;
   function build() {
@@ -230,6 +235,10 @@
     const b = p.btn;
     if (HOLD[b]) cmd('+' + HOLD[b]);
     else if (b === 'force') forceDown();
+    else if (b === 'jet') {
+      // first press only fetches the jetpack (/jetpack toggles it, so never send it while we have one)
+      if (has(readState()[WS.holdables], HI_JETPACK)) { cmd('+use'); p.using = true; } else cmd('jetpack');
+    }
     else if (b === 'menu') touchMode ? openMenu() : key(K_ESCAPE);
     else if (b === 'forcesel') openForceRadial(p);
     else if (b === 'weapon') p.timer = setTimeout(() => { p.timer = null; p.radial = true; openWeaponRadial(p); }, 400);
@@ -239,6 +248,7 @@
     if (b === 'full') fullscreen();   // on release: a touch's pointerup carries the user activation
     else if (HOLD[b]) cmd('-' + HOLD[b]);
     else if (b === 'force') forceUp();
+    else if (b === 'jet' && p.using) cmd('-use');
     else if (b === 'weapon' && p.timer) { clearTimeout(p.timer); cmd('weapnext'); }
   }
 
@@ -474,11 +484,17 @@
   }
 
   // ---------- show / hide, auto-join ----------
-  let joined = false, touchMode = false;
+  let joined = false, touchMode = false, bound = false;
   function tick() {
     if (!M || !M._web_state) return;
     readState();
     const active = st[WS.state] === CA_ACTIVE && st[WS.valid];
+    // server features (JA++ hook and jetpack): default keys, never replacing the player's own binds
+    if (active && !bound && M._web_bind_default) {
+      bound = true;
+      M.ccall('web_bind_default', null, ['string', 'string'], ['f', '+button12']);
+      M.ccall('web_bind_default', null, ['string', 'string'], ['j', 'jetpack']);
+    }
     // phones cannot use the original menus: join the game automatically once (P3 adds an HTML menu)
     if (touchMode && active && !joined) {
       joined = true;

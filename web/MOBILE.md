@@ -117,6 +117,9 @@ override it, so mobile mode can be tested on desktop too.
   - **Right half:** dragging aims, including drags that start on a button, so attacking and aiming
     work at the same time.
   - **Right-thumb cluster:** Attack (hold), Alt-attack, Jump, Crouch.
+  - **Left of the cluster:** Hook (hold = JA++ grappling hook, `+button12`) and Jet. Jet's first press
+    sends `/jetpack` when `web_state()` shows no jetpack holdable (the command toggles it), then each
+    press is `+use`, which starts and stops the jetpack in the air.
   - **Upper right:** Force: tap uses the selected power, holding it holds grip, lightning and drain.
     The chip above the button shows the selected power, and tapping it opens the force radial.
     (Changed from "long press opens the radial": a long press is needed for the hold powers.)

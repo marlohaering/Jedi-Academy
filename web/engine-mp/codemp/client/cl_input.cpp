@@ -1337,6 +1337,7 @@ Called from JavaScript (touch overlay, Gamepad API) between frames:
   web_key(key, down)  key event (keycodes from keycodes.h), so binds and menus work
   web_cmd(text)       console command text (e.g. "+attack", "weapon 3")
   web_state()         pointer to WEB_STATE_COUNT ints describing the local player, see below
+  web_bind_default(key, cmd)  bind key to cmd unless the key is already bound (shell default binds)
 =================
 */
 #include <emscripten.h>
@@ -1367,7 +1368,15 @@ extern "C" EMSCRIPTEN_KEEPALIVE void web_cmd( const char *text ) {
 	Cbuf_AddText( "\n" );
 }
 
-#define WEB_STATE_COUNT 12
+extern "C" EMSCRIPTEN_KEEPALIVE void web_bind_default( const char *key, const char *cmd ) {
+	const int k = Key_StringToKeynum( (char *)key );
+	const char *bound = k >= 0 ? Key_GetBinding( k ) : NULL;
+	if ( k >= 0 && ( !bound || !bound[0] ) ) {
+		Key_SetBinding( k, cmd );
+	}
+}
+
+#define WEB_STATE_COUNT 13
 extern "C" EMSCRIPTEN_KEEPALIVE int *web_state( void ) {
 	static int st[WEB_STATE_COUNT];
 	const playerState_t *ps = &cl.snap.ps;
@@ -1384,6 +1393,7 @@ extern "C" EMSCRIPTEN_KEEPALIVE int *web_state( void ) {
 	st[9] = valid ? ps->pm_type : 0;
 	st[10] = valid ? ps->fd.saberAnimLevel : 0;
 	st[11] = valid ? ps->fd.forcePower : 0;
+	st[12] = valid ? ps->stats[2] : 0;              // STAT_HOLDABLE_ITEMS: bit per HI_* index
 	return st;
 }
 

@@ -1,7 +1,7 @@
-# Browser multiplayer server (FFA on mp/ffa3)
+# Browser multiplayer server (FFA on mp/duel3)
 
 ```
-browser (openjk_mp.wasm) --wss://host/ws--> gateway.py --UDP 127.0.0.1:29070--> openjkded (mp/ffa3, FFA)
+browser (openjk_mp.wasm) --wss://host/ws--> gateway.py --UDP 127.0.0.1:29070--> openjkded (mp/duel3, FFA)
 ```
 
 * `gateway.py`: password login (signed cookie), serves the client and the pk3s, bridges WebSocket <-> UDP.

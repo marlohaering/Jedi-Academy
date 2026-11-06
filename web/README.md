@@ -5,7 +5,7 @@ WebAssembly with Emscripten. There are two independent parts:
 
 | Part | What it is | Game data |
 |---|---|---|
-| **Multiplayer server** (`engine-mp/`, `server/`, `shell-mp/`) | Password-protected online FFA server on `mp/ffa3`. Everyone who opens the page joins the same game. | Original `assets0-3.pk3` (not in the repo) |
+| **Multiplayer server** (`engine-mp/`, `server/`, `shell-mp/`) | Password-protected online FFA server on `mp/duel3`. Everyone who opens the page joins the same game. | Original `assets0-3.pk3` (not in the repo) |
 | **Single-player demo** (`engine/`, `assets/`, `shell/`) | SP engine with a generated placeholder level, models, textures and sounds | Generated, no original data needed |
 
 Live server: **https://jka.haering.me** (also https://jka-web-ffa.fly.dev). The password is stored as the
@@ -29,7 +29,7 @@ Browser                                  fly.io machine (jka-web-ffa, fra)
 │ Emscripten sockets ──┼── as WebSocket ─┼──▶ one UDP socket per browser ──┐           │
 └──────────────────────┘    messages     │                                 ▼           │
                                          │ openjkded (OpenJK dedicated, 127.0.0.1:29070)│
-                                         │  mp/ffa3, g_gametype 0 (FFA), 16 slots       │
+                                         │  mp/duel3, g_gametype 0 (FFA), 16 slots      │
                                          │ /data volume: base/assets0-3.pk3, web/*.pk3  │
                                          └──────────────────────────────────────────────┘
 ```
@@ -74,7 +74,7 @@ these changes:
 Requirements:
 * Emscripten **2.0.11**. Newer releases removed Regal.
   * Its `libjpeg` port still downloads from the dead bintray URL. Change `tools/ports/libjpeg.py` to
-    `https://www.ijg.org/files/jpegsrc.v9c.tar.gz`.
+    `https://www.ijg.org/files/jpegsrc.v9c.tar.gz` and its `HASH` to that file's sha512.
 * cmake, ninja, python3
 * podman or docker
 

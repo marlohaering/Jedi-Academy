@@ -31,9 +31,13 @@ AddListener('JPLUA_EVENT_CLIENTBEGIN', function(ply)
 	end
 end)
 
-AddListener('JPLUA_EVENT_CLIENTDISCONNECT', function(ply)
-	greeted[ply.id] = nil
-	showing[ply.id] = nil
+-- the disconnect event gets nil (the entity is already freed), so the slot is reset when a new
+-- player connects to it (firstTime = false on map changes and reconnects of the same player)
+AddListener('JPLUA_EVENT_CLIENTCONNECT', function(clientNum, userinfo, ip, firstTime)
+	if firstTime then
+		greeted[clientNum] = nil
+		showing[clientNum] = nil
+	end
 end)
 
 AddListener('JPLUA_EVENT_RUNFRAME', function()
