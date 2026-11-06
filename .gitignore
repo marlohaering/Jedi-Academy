@@ -11,3 +11,6 @@
 *.lai
 *.la
 *.a
+
+# local JA+ release download (reference only)
+/japlus_v2.4Build7/
