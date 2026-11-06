@@ -80,6 +80,10 @@ podman run --rm -p 8080:8080 -e JKA_PASSWORD=secret -v ./data:/data:Z jka-mp
   (`CG_ReadNextSnapshot: way out of range`) and the server drops the client after `sv_timeout`.
 - All players reach `openjkded` from `127.0.0.1` through the gateway. Keep `g_antiFakePlayer 0` and
   `sv_pure 0` (clients use the repacked pk3).
+- The dedicated server is a 32-bit (i386) build so it can load JA+ (`/data/japlus/jampgamei386.so`,
+  `FS_GAME=japlus` in `fly.toml`). Behind the gateway every player is `127.0.0.1`, so JA+ needs
+  `jp_maxConnFromIP` raised (done in `server.cfg`). Passwords (rcon, JA+ admin) are in
+  `/data/base/secrets.cfg` on the volume.
 - Changing the map: edit `server.cfg`, and also the `map=` and `music=` arguments of `repack.py` in
   `start.sh`.
 - Rendering: Regal never uploads client-side vertex arrays for glDrawElements/glDrawArrays (its VAO
