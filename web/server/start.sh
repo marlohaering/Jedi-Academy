@@ -20,9 +20,9 @@ fi
 
 # slim client pk3 for the browsers (rebuilt when the game data, the mod, the map list or repack.py changes)
 CLIENT_DATA_DIR="${CLIENT_DATA_DIR:-/data/web}"
-# maps the clients can load: the server.cfg map plus the duel arenas for votes and admins (map changes
+# maps the clients can load: the server.cfg map plus the stock FFA and duel maps for admins (map changes
 # to a map missing here leave the browser players without the bsp)
-CLIENT_MAPS="mp/ffa3,mp/duel1,mp/duel2,mp/duel3,mp/duel4,mp/duel5,mp/duel6,mp/duel7,mp/duel8,mp/duel9,mp/duel10"
+CLIENT_MAPS="mp/ffa1,mp/ffa2,mp/ffa3,mp/ffa4,mp/ffa5,mp/duel1,mp/duel2,mp/duel3,mp/duel4,mp/duel5,mp/duel6,mp/duel7,mp/duel8,mp/duel9,mp/duel10"
 # .mod remembers which mod and maps a pk3 was built for, so changing either rebuilds it
 PK3_KEY="$FS_GAME_ARGS|$CLIENT_MAPS"
 mkdir -p "$CLIENT_DATA_DIR"

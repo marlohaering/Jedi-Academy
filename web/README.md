@@ -5,7 +5,7 @@ WebAssembly with Emscripten. There are two independent parts:
 
 | Part | What it is | Game data |
 |---|---|---|
-| **Multiplayer server** (`engine-mp/`, `server/`, `shell-mp/`) | Password-protected online FFA server on `mp/duel3`. Everyone who opens the page joins the same game. | Original `assets0-3.pk3` (not in the repo) |
+| **Multiplayer server** (`engine-mp/`, `server/`, `shell-mp/`) | Password-protected online FFA server on `mp/duel1`. Everyone who opens the page joins the same game. | Original `assets0-3.pk3` (not in the repo) |
 | **Single-player demo** (`engine/`, `assets/`, `shell/`) | SP engine with a generated placeholder level, models, textures and sounds | Generated, no original data needed |
 
 Live server: **https://jka.haering.me** (also https://jka-web-ffa.fly.dev). The password is stored as the
@@ -29,7 +29,7 @@ Browser                                  fly.io machine (jka-web-ffa, fra)
 │ Emscripten sockets ──┼── as WebSocket ─┼──▶ one UDP socket per browser ──┐           │
 └──────────────────────┘    messages     │                                 ▼           │
                                          │ openjkded (OpenJK dedicated, 127.0.0.1:29070)│
-                                         │  mp/duel3, g_gametype 0 (FFA), 16 slots      │
+                                         │  mp/duel1, g_gametype 0 (FFA), 16 slots      │
                                          │ /data volume: base/assets0-3.pk3, web/*.pk3  │
                                          └──────────────────────────────────────────────┘
 ```
@@ -41,12 +41,12 @@ Browser                                  fly.io machine (jka-web-ffa, fra)
   its password check is the only way in. Without a valid cookie the page, the game data and the
   WebSocket all return 401.
 * **Client and server use the same OpenJK version** (commit `260c59c`), so the game logic matches.
-* **Player download:** `server/repack.py` builds one slim `jka-mp.pk3` (≈470 MB instead of 1.2 GB) for the
-  browsers at container start. It contains the maps in `CLIENT_MAPS` (`server/start.sh`: ffa3 and
+* **Player download:** `server/repack.py` builds one slim `jka-mp.pk3` (≈510 MB instead of 1.2 GB) for the
+  browsers at container start. It contains the maps in `CLIENT_MAPS` (`server/start.sh`: ffa1–5 and
   duel1–10) and leaves out cinematics, non-English dialogue, all other maps with their textures and
   props, and the music of other levels. The browser keeps it in Cache Storage, so it is only downloaded
   once. The server itself uses the original pk3s (`sv_pure 0`).
-* **Phones** get `jka-mp-mobile.pk3` (≈170 MB: only what those maps need, images ≤ 256 px), built in the
+* **Phones** get `jka-mp-mobile.pk3` (≈180 MB: only what those maps need, images ≤ 256 px), built in the
   background at container start (`repack.py … profile=mobile`). Phones run at a smaller resolution and
   30 fps. `?mobile` / `?desktop` force the mode. They get touch controls (`shell-mp/touch.js`: move stick,
   look drag, buttons, radials) and join the game automatically. A gamepad works on phone and desktop.

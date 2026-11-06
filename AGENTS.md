@@ -99,7 +99,7 @@ podman run --rm -p 8080:8080 -e JKA_PASSWORD=secret -v ./data:/data:Z jka-mp
   through `web_bind_default` when those keys are unbound; the client config is not persisted, so this
   runs every session.
 - Changing the map: edit `server.cfg`. Every map the server can switch to must be in `CLIENT_MAPS` in
-  `start.sh` (currently ffa3 + duel1–10; default map mp/duel3), otherwise browser players lack the bsp and textures.
+  `start.sh` (currently ffa1–5 + duel1–10; default map mp/duel1). `server/japp/scripts/duel.arena` marks the duel maps as FFA maps too, so JA++ `/ammap ffa mp/duelN` accepts them, otherwise browser players lack the bsp and textures.
 - `repack.py` must write directory entries into the pk3 (`models/players/`, …): the engine lists pk3
   subdirectories only from those, and the UI's character lists stay empty without them.
 - Rendering: Regal never uploads client-side vertex arrays for glDrawElements/glDrawArrays (its VAO
