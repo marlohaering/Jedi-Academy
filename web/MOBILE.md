@@ -86,14 +86,11 @@ override it, so mobile mode can be tested on desktop too.
   skipping display frames in its `requestAnimationFrame` wrapper, and the engine runs with
   `com_maxfps 0`. The engine's own cap busy-waits inside the frame in the browser: it burned the whole
   33 ms frame on the CPU.
-- **Render-path work is out of scope** (decided 2026-11-06, P0 dropped). Regal and the current draw
-  path stay as they are. Resolution and the frame cap are the only performance levers.
-- If the frame rate turns out to be unplayable, possible later work, in order:
-  1. Make `r_primitives 2` (glDrawElements) render correctly under Regal. On the laptop that takes the
-     frame time from ≈11 to ≈2.6 ms. Desktop benefits too.
-  2. A small direct WebGL backend for the rd-vanilla tessellator (`RB_StageIteratorGeneric` and
-     friends).
-  3. Replace Regal with gl4es.
+- **Render-path work was out of scope here** (P0 dropped 2026-11-06), but master has since added batched
+  drawing through streamed buffer objects (`rd-vanilla/tr_webgl_arrays.cpp`). That is what P0 was for.
+  After rebasing onto it (headless, laptop GPU): phone mode at 914×412 takes 5.8 ms per frame (p95
+  7.7 ms; before: ≈19 ms), and desktop at 1280×720 takes 4.8 ms. Resolution and the frame cap remain the
+  phone-specific levers.
 
 ### Input
 
@@ -246,6 +243,18 @@ PWA, fullscreen and the rotate screen: see above. Phone lifecycle in `touch.js`:
   fullscreen remains) and notes it in the F9 log (`[touch] fullscreen on unexpected element …`). The
   trigger is still unknown.
 - Tested headless: audio resume, wake lock, canvas-fullscreen safeguard, background disconnect + screen.
+
+## Rebased onto JA+ (2026-11-06)
+
+- `repack.py` keeps master's multi-pk3 handling (`pk3s()` over the base dir plus `mod=<dir>`, skipping
+  code pk3s and DLLs). The mobile profile runs on top of it. JA+'s `models/players/_humanoid/`
+  (`_humanoid.gla`, `animation.cfg`, `animevents.cfg` from `base/japlus_gla_anims.pk3`) stays: emotes and
+  the right animations depend on it. Only the SP level sets `_humanoid_<level>/` are dropped. Checked
+  with a fake mod directory.
+- `start.sh` builds the phone pk3 with the same `mod=` argument and its own `.mod` marker, so it rebuilds
+  when `FS_GAME` changes (and when `repack.py` is newer).
+- The shell's frame loop combines master's rAF stall fallback with the phone frame cap and gamepad
+  polling.
 
 ## Open risks
 
