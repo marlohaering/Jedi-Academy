@@ -1,12 +1,12 @@
 #!/bin/sh
 # Starts the OpenJK dedicated server (UDP on localhost only) and the web gateway.
 set -e
-mkdir -p "$DATA_DIR" /tmp/jkhome
+mkdir -p "$DATA_DIR" "$(dirname "$DATA_DIR")/home"
 if ! ls "$DATA_DIR"/*.pk3 >/dev/null 2>&1; then
   echo "No pk3 files in $DATA_DIR - upload the game data first (see web/server/README.md)" >&2
 fi
 # optional server mod: a directory next to base/ on the volume, e.g. FS_GAME=japlus with
-# /data/japlus/jampgamei386.so; the mod's asset pk3s also go into the client pk3
+# the JA++ game module from the image (/opt/openjk/japlus); the mod dir's asset pk3s also go into the client pk3
 MOD_DIR=""
 FS_GAME_ARGS=""
 if [ -n "$FS_GAME" ]; then
@@ -50,8 +50,8 @@ fi
 export CLIENT_DATA_DIR
 
 # fs_basepath points at the volume (base/*.pk3); the game module comes from fs_cdpath
-/opt/openjk/openjkded.i386 $FS_GAME_ARGS +set dedicated 1 +set net_ip 127.0.0.1 +set net_port "$GAME_PORT" \
-  +set fs_cdpath /opt/openjk +set fs_basepath "$(dirname "$DATA_DIR")" +set fs_homepath /tmp/jkhome \
+/opt/openjk/openjkded.x86_64 $FS_GAME_ARGS +set dedicated 1 +set net_ip 127.0.0.1 +set net_port "$GAME_PORT" \
+  +set fs_cdpath /opt/openjk +set fs_basepath "$(dirname "$DATA_DIR")" +set fs_homepath "$(dirname "$DATA_DIR")/home" \
   +exec server.cfg &
 GAME_PID=$!
 python3 /opt/gateway/gateway.py &

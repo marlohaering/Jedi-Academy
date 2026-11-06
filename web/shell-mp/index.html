@@ -15,20 +15,75 @@
      object-fit keeps the aspect ratio when the viewport changes (bars, fullscreen) */
   #canvas { position:fixed; inset:0; width:100%; height:100%; display:block; background:#000; outline:none;
     object-fit:contain; }
-  #overlay { position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
-    background:radial-gradient(ellipse at center, #0d1a33 0%, var(--bg) 70%); z-index:2; padding:0 16px; }
+  /* ---- loading screen: pre-join card and the connect/map-load phase until the player is in game.
+     The engine blocks the main thread while it loads the map, so everything that moves is a CSS
+     transform/opacity animation, which the compositor keeps running. ---- */
+  #overlay { position:fixed; inset:0; z-index:2; display:flex; align-items:center; justify-content:center;
+    padding:16px; box-sizing:border-box; overflow:hidden; background:var(--bg); transition:opacity .9s ease; }
+  #overlay.fade { opacity:0; pointer-events:none; }
   #overlay.hidden { display:none; }
-  .card { width:100%; max-width:520px; text-align:center; }
-  h1 { margin:0 0 6px; font-size:28px; letter-spacing:.06em; color:#ffe81f; text-transform:uppercase; }
+  #bg { position:absolute; inset:-4%; background:#0d1a33 center/cover no-repeat;
+    filter:brightness(.42) saturate(1.15); transform-origin:60% 40%; opacity:0; transition:opacity 1.6s ease;
+    animation:drift 38s ease-in-out infinite alternate; will-change:transform; }
+  #bg.on { opacity:1; }
+  @keyframes drift { from { transform:scale(1.02) translate(0,0); } to { transform:scale(1.14) translate(-2%,1.5%); } }
+  #overlay::before { content:""; position:absolute; inset:0; pointer-events:none;
+    background:radial-gradient(ellipse at 50% 45%, rgba(5,7,12,0) 0%, rgba(5,7,12,.55) 55%, rgba(5,7,12,.95) 100%),
+               linear-gradient(to bottom, rgba(5,7,12,.2), rgba(5,7,12,.75)); }
+  /* a slow band of light sweeping across, like a holo projector */
+  #overlay::after { content:""; position:absolute; top:-50%; bottom:-50%; width:40%; left:-60%; pointer-events:none;
+    background:linear-gradient(100deg, transparent, rgba(120,190,255,.07), transparent);
+    animation:sweep 9s linear infinite; will-change:transform; }
+  @keyframes sweep { to { transform:translateX(420%); } }
+  .card { position:relative; z-index:1; width:100%; max-width:540px; text-align:center; padding:28px 30px 22px;
+    box-sizing:border-box; border-radius:14px; background:rgba(10,16,30,.55); border:1px solid rgba(110,170,255,.18);
+    box-shadow:0 20px 60px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.05);
+    -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px); }
+  h1 { margin:0; font-size:34px; font-weight:800; letter-spacing:.22em; text-indent:.22em; color:#ffe81f;
+    text-transform:uppercase; text-shadow:0 0 18px rgba(255,232,31,.35), 0 2px 0 rgba(0,0,0,.6); }
+  .sub { margin:6px 0 14px; color:#aebbd0; font-size:13px; letter-spacing:.18em; text-transform:uppercase; }
+  .chips { display:flex; flex-wrap:wrap; gap:6px; justify-content:center; margin:0 0 16px; min-height:24px; }
+  .chip { font-size:12px; padding:3px 10px; border-radius:999px; color:#cfe3ff; background:rgba(74,163,255,.12);
+    border:1px solid rgba(74,163,255,.3); }
+  .chip.live::before { content:""; display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:6px;
+    background:#3ddc84; box-shadow:0 0 8px #3ddc84; vertical-align:1px; }
   p { color:var(--muted); margin:8px 0; }
-  #status { color:var(--fg); min-height:1.4em; }
-  progress { width:100%; height:6px; accent-color:var(--accent); }
-  input { width:100%; max-width:280px; box-sizing:border-box; margin-top:14px; padding:10px 12px; font-size:15px;
-    border-radius:6px; background:var(--panel); color:var(--fg); border:1px solid #23324d; text-align:center; }
-  button { margin-top:12px; padding:10px 22px; font-size:15px; border-radius:6px; border:1px solid var(--accent);
-    background:transparent; color:var(--fg); cursor:pointer; }
-  button:hover { background:var(--accent); color:#000; }
+  #status { color:var(--fg); min-height:1.4em; margin:12px 0 8px; font-size:14px; }
+  /* lightsaber progress bar */
+  .bar { position:relative; height:6px; border-radius:6px; background:rgba(255,255,255,.07); overflow:hidden; }
+  .bar i { position:absolute; inset:0; transform-origin:left; transform:scaleX(var(--p,0)); transition:transform .35s ease;
+    background:linear-gradient(90deg, #2a7fff, #8fd0ff); box-shadow:0 0 12px #4aa3ff, 0 0 3px #fff inset; border-radius:6px; }
+  .bar b { position:absolute; top:0; bottom:0; width:30%; left:-30%;
+    background:linear-gradient(90deg, transparent, rgba(255,255,255,.55), transparent); animation:shine 1.8s linear infinite; }
+  @keyframes shine { to { transform:translateX(450%); } }
+  .bar.busy i { transform:scaleX(1); opacity:.35; }
+  /* connect / load steps */
+  #steps { list-style:none; padding:0; margin:16px auto 4px; display:none; text-align:left; max-width:300px; }
+  #overlay.joining #steps { display:block; }
+  #steps li { position:relative; padding:5px 0 5px 30px; color:#5f6d85; transition:color .4s; }
+  #steps li::before { content:""; position:absolute; left:4px; top:8px; width:12px; height:12px; border-radius:50%;
+    border:2px solid #34425a; box-sizing:border-box; }
+  #steps li.active { color:var(--fg); }
+  #steps li.active::before { border-color:#4aa3ff transparent #4aa3ff transparent; animation:spin .9s linear infinite; }
+  #steps li.done { color:#9fb3cc; }
+  #steps li.done::before { border-color:#3ddc84; background:#3ddc84; box-shadow:0 0 8px rgba(61,220,132,.6); }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  #overlay.joining #join, #overlay.joining #keys { display:none; }
+  input { width:100%; max-width:280px; box-sizing:border-box; margin-top:18px; padding:11px 12px; font-size:15px;
+    border-radius:8px; background:rgba(6,10,20,.75); color:var(--fg); border:1px solid #2a3b5a; text-align:center; outline:none; }
+  input:focus { border-color:#4aa3ff; box-shadow:0 0 0 3px rgba(74,163,255,.18); }
+  button { margin-top:12px; padding:11px 30px; font-size:15px; font-weight:600; letter-spacing:.08em; border-radius:8px;
+    border:1px solid #4aa3ff; background:rgba(74,163,255,.12); color:#e8f3ff; cursor:pointer; transition:background .2s, box-shadow .2s; }
+  button:hover:not(:disabled) { background:#4aa3ff; color:#04101f; box-shadow:0 0 18px rgba(74,163,255,.6); }
   button:disabled { opacity:.4; cursor:default; }
+  #tip { min-height:2.8em; margin:16px 0 0; font-size:13px; color:#8fa0bb; transition:opacity .5s; }
+  #tip.out { opacity:0; }
+  #tip em { color:#ffe81f; font-style:normal; }
+  @media (max-height:520px) {   /* phones in landscape */
+    .card { padding:14px 18px 12px; } h1 { font-size:24px; } .sub { margin:4px 0 8px; }
+    .chips { margin-bottom:8px; } input { margin-top:10px; padding:8px; } #tip { margin-top:8px; }
+    #steps { margin-top:8px; } #steps li { padding:2px 0 2px 30px; } #steps li::before { top:5px; }
+  }
   kbd { background:var(--panel); border:1px solid #233; border-radius:3px; padding:0 5px; font-size:12px; }
   #log { position:fixed; left:0; right:0; bottom:0; max-height:35vh; overflow:auto; margin:0; padding:6px 10px;
     font:11px/1.35 ui-monospace, monospace; background:rgba(0,0,0,.8); color:#9fb; z-index:3; display:none; white-space:pre-wrap; }
@@ -43,15 +98,26 @@
 <body>
 <canvas id="canvas" tabindex="-1" oncontextmenu="event.preventDefault()"></canvas>
 <div id="overlay">
+  <div id="bg"></div>
   <div class="card">
     <h1>Jedi Academy</h1>
-    <p>Multiplayer · Free For All</p>
+    <div class="sub" id="server">Multiplayer Arena</div>
+    <div class="chips" id="chips"></div>
     <p id="status">Loading engine…</p>
-    <progress id="progress" max="1" value="0"></progress>
-    <div><input id="name" maxlength="31" placeholder="Your name" autocomplete="nickname"></div>
-    <button id="play" disabled>Join game</button>
-    <p id="keys" style="margin-top:18px"><kbd>WASD</kbd> move · <kbd>Mouse</kbd> look · <kbd>Click</kbd> attack ·
+    <div class="bar" id="bar"><i id="progress"></i><b></b></div>
+    <ol id="steps">
+      <li data-s="connect">Contacting the server</li>
+      <li data-s="gamestate">Receiving the game state</li>
+      <li data-s="map">Loading the arena</li>
+      <li data-s="enter">Entering the battle</li>
+    </ol>
+    <div id="join">
+      <div><input id="name" maxlength="31" placeholder="Your name" autocomplete="nickname"></div>
+      <button id="play" disabled>Join battle</button>
+    </div>
+    <p id="keys" style="margin-top:16px"><kbd>WASD</kbd> move · <kbd>Mouse</kbd> look · <kbd>Click</kbd> attack ·
       <kbd>Space</kbd> jump · <kbd>Tab</kbd> scores · <kbd>T</kbd> chat · <kbd>~</kbd> console · <kbd>F9</kbd> log</p>
+    <p id="tip"></p>
   </div>
 </div>
 <pre id="log"></pre>
@@ -60,6 +126,8 @@
 (function () {
   const statusEl = document.getElementById('status');
   const progressEl = document.getElementById('progress');
+  const overlay = document.getElementById('overlay');
+  const setProgress = v => progressEl.style.setProperty('--p', Math.max(0, Math.min(1, v)));
   const playBtn = document.getElementById('play');
   const nameEl = document.getElementById('name');
   const logEl = document.getElementById('log');
@@ -168,7 +236,7 @@
   let engineReady = false, paks = null, manifest = null;
   function maybeReady() {
     if (!engineReady || !paks) return;
-    statusEl.textContent = 'Ready.'; progressEl.value = 1; playBtn.disabled = false;
+    statusEl.textContent = 'Ready.'; setProgress(1); playBtn.disabled = false;
     if (params.has('autostart')) start();
   }
 
@@ -177,7 +245,7 @@
     print: t => { console.log(t); log(t); },
     printErr: t => { console.warn(t); log(t); },
     onRuntimeInitialized() { engineReady = true; maybeReady(); },
-    onAbort(what) { statusEl.textContent = 'Engine crashed: ' + what; document.getElementById('overlay').classList.remove('hidden'); logEl.classList.add('show'); },
+    onAbort(what) { statusEl.textContent = 'Engine crashed: ' + what; overlay.classList.remove('hidden', 'fade', 'joining'); logEl.classList.add('show'); },
     setStatus(t) { if (t) log(t); },
     // every UDP packet goes over this WebSocket; the gateway relays it to the game server
     websocket: { url: (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws', subprotocol: 'binary' },
@@ -196,7 +264,7 @@
     if (!manifest.paks.length) throw new Error('the server has no game data (pk3) installed');
     const total = manifest.paks.reduce((a, p) => a + p.size, 0);
     let got = 0;
-    const tick = n => { got += n; progressEl.value = 0.95 * got / total; statusEl.textContent = 'Loading game data… ' + mb(got) + ' / ' + mb(total); };
+    const tick = n => { got += n; setProgress(0.95 * got / total); statusEl.textContent = 'Loading game data… ' + mb(got) + ' / ' + mb(total); };
     const data = [];
     for (const p of manifest.paks) data.push(await loadPak(p, tick));
     paks = data;
@@ -205,6 +273,84 @@
     statusEl.textContent = 'Game data loaded.';
     maybeReady();
   })().catch(e => { statusEl.textContent = 'Failed to load game data: ' + e.message; });
+
+  // ---- loading screen ----
+  const TIPS = [
+    'Type <em>/ammotd</em> in the console (<em>~</em>) to read the server welcome again.',
+    'Emotes: <em>/amhug</em>, <em>/amkneel</em>, <em>/ambreakdance</em>, <em>/amvictory</em> and many more.',
+    'Hold <em>Tab</em> to see the scoreboard.',
+    'Press <em>T</em> to chat with everyone in the arena.',
+    'Switch saber styles with <em>L</em> (fast, medium, strong).',
+    'Admins log in with <em>/amlogin &lt;user&gt; &lt;password&gt;</em>.',
+    'Stuck in the menus? <em>Esc</em> closes them, <em>~</em> opens the console.',
+  ];
+  const tipEl = document.getElementById('tip');
+  let tipIdx = Math.floor(Math.random() * TIPS.length);
+  const nextTip = () => {
+    tipEl.classList.add('out');
+    setTimeout(() => { tipIdx = (tipIdx + 1) % TIPS.length; tipEl.innerHTML = 'Tip: ' + TIPS[tipIdx]; tipEl.classList.remove('out'); }, 500);
+  };
+  tipEl.innerHTML = 'Tip: ' + TIPS[tipIdx];
+  const tipTimer = setInterval(nextTip, 7000);
+
+  // server name, map, players and the map's levelshot as background (gateway: /base/info.json)
+  const chip = (text, cls) => { const c = document.createElement('span'); c.className = 'chip' + (cls ? ' ' + cls : ''); c.textContent = text; return c; };
+  fetch('base/info.json').then(r => r.ok ? r.json() : null).then(i => {
+    if (!i || !i.online) return;
+    const clean = t => String(t || '').replace(/\^./g, '');
+    if (i.hostname) document.getElementById('server').textContent = clean(i.hostname);
+    const chips = document.getElementById('chips');
+    if (i.mapTitle || i.map) chips.append(chip(i.mapTitle || i.map));
+    chips.append(chip(i.players + ' / ' + i.maxPlayers + ' online', 'live'));
+    if (i.mod) chips.append(chip(i.mod === 'japlus' ? 'JA++' : i.mod));
+    if (i.map) {
+      const img = new Image();
+      img.onload = () => { const bg = document.getElementById('bg'); bg.style.backgroundImage = 'url("' + img.src + '")'; bg.classList.add('on'); };
+      img.src = 'base/levelshot/' + i.map + '.jpg';
+    }
+  }).catch(() => {});
+
+  // After "Join": keep the screen up through connect and map load, and fade it out once the
+  // player is in the game. The engine's connection state comes from web_state() (cl_input.cpp).
+  const CA = { DISCONNECTED: 1, CONNECTING: 3, CHALLENGING: 4, CONNECTED: 5, LOADING: 6, PRIMED: 7, ACTIVE: 8 };
+  const STEP_OF = s => s >= CA.ACTIVE ? 'enter' : s >= CA.LOADING ? 'map' : s >= CA.CONNECTED ? 'gamestate' : 'connect';
+  const STATUS = { connect: 'Opening a channel to the server…', gamestate: 'Receiving the game state…',
+                   map: 'Loading the arena — this takes a moment…', enter: 'Entering the battle…' };
+  const ORDER = ['connect', 'gamestate', 'map', 'enter'];
+  function setStep(step, allDone) {
+    const at = ORDER.indexOf(step);
+    document.querySelectorAll('#steps li').forEach((li, i) => {
+      li.className = i < at || allDone ? 'done' : i === at ? 'active' : '';
+    });
+    statusEl.textContent = allDone ? 'May the Force be with you.' : STATUS[step];
+  }
+  function joinScreen() {
+    overlay.classList.add('joining');
+    document.getElementById('bar').classList.add('busy');
+    setStep('connect');
+    const t0 = performance.now();
+    let seen = 0, last = '';
+    const poll = setInterval(() => {
+      const M = window.Module;
+      if (!M || !M._web_state || !M.HEAP32) return;
+      const p = M._web_state() >> 2, state = M.HEAP32[p], valid = M.HEAP32[p + 2];
+      seen = Math.max(seen, state);
+      const step = STEP_OF(state);
+      if (step !== last) { last = step; setStep(step); log('loading screen: state ' + state); }
+      const done = state === CA.ACTIVE && valid;
+      // connection refused / dropped before we got in: show the engine's own error message
+      const failed = seen >= CA.CONNECTING && state <= CA.DISCONNECTED;
+      if (done || failed || performance.now() - t0 > 180000) {
+        clearInterval(poll); clearInterval(tipTimer);
+        if (done) setStep('enter', true);
+        setTimeout(() => {
+          overlay.classList.add('fade');
+          setTimeout(() => overlay.classList.add('hidden'), 950);
+          Module.canvas.focus();
+        }, done ? 700 : 0);
+      }
+    }, 200);
+  }
 
   function start() {
     if (!engineReady || !paks || start.done) return;
@@ -218,7 +364,7 @@
     // canOwn: MEMFS keeps the downloaded buffer instead of copying it (the pk3 would be in memory twice)
     manifest.paks.forEach((p, i) => { FS.writeFile('/jka/base/' + p.name, paks[i], { canOwn: true }); paks[i] = null; });
     paks = [];
-    document.getElementById('overlay').classList.add('hidden');
+    joinScreen();
     let video = ['+set', 'r_mode', '-2', '+set', 'com_hunkmegs', '256'];
     if (MOBILE) {
       // render at the screen's CSS pixel size in landscape (devicePixelRatio ignored; the game runs in

@@ -22,7 +22,9 @@ import hmac
 import json
 import logging
 import os
+import re
 import time
+import zipfile
 
 from aiohttp import WSMsgType, web
 
@@ -133,6 +135,95 @@ async def pak(request):
     return web.FileResponse(path, headers={'Cache-Control': 'private, max-age=31536000, immutable'})
 
 
+class _InfoQuery(asyncio.DatagramProtocol):
+    def __init__(self, fut):
+        self.fut = fut
+
+    def datagram_received(self, data, addr):
+        if not self.fut.done():
+            self.fut.set_result(data)
+
+
+async def query_info():
+    """getinfo on the game server: hostname, map, player count, mod (for the loading screen)"""
+    loop = asyncio.get_running_loop()
+    fut = loop.create_future()
+    transport, _ = await loop.create_datagram_endpoint(lambda: _InfoQuery(fut), remote_addr=GAME)
+    try:
+        transport.sendto(b'\xff\xff\xff\xffgetinfo web')
+        data = await asyncio.wait_for(fut, 1.5)
+    finally:
+        transport.close()
+    text = data[4:].decode('latin-1')
+    if not text.startswith('infoResponse'):
+        raise ValueError('unexpected reply')
+    parts = text.split('\n', 1)[1].strip().split('\\')[1:]
+    return dict(zip(parts[::2], parts[1::2]))
+
+
+_levelshots = {}
+_map_titles = None
+
+
+def map_title(mapname):
+    """longname of a map from the scripts/*.arena files in the client pk3 (e.g. mp/ffa3 -> Tatooine City)"""
+    global _map_titles
+    if _map_titles is None:
+        _map_titles = {}
+        for p in pak_list(False):
+            try:
+                with zipfile.ZipFile(os.path.join(DATA_DIR, p['name'])) as z:
+                    for n in z.namelist():
+                        if n.lower().startswith('scripts/') and n.lower().endswith('.arena'):
+                            for block in re.findall(r'\{([^}]*)\}', z.read(n).decode('latin-1')):
+                                m, t = re.search(r'map\s+"([^"]+)"', block), re.search(r'longname\s+"([^"]+)"', block)
+                                if m and t:
+                                    _map_titles[m.group(1).lower()] = t.group(1)
+            except (OSError, zipfile.BadZipFile):
+                pass
+    return _map_titles.get(mapname.lower(), '')
+
+
+def levelshot(mapname):
+    """levelshots/<map>.jpg from the desktop client pk3, cached in memory"""
+    if mapname not in _levelshots:
+        want = f'levelshots/{mapname}.jpg'.lower()
+        data = None
+        for p in pak_list(False):
+            try:
+                with zipfile.ZipFile(os.path.join(DATA_DIR, p['name'])) as z:
+                    for n in z.namelist():
+                        if n.lower() == want:
+                            data = z.read(n)
+            except (OSError, zipfile.BadZipFile):
+                pass
+        _levelshots[mapname] = data
+    return _levelshots[mapname]
+
+
+async def info(request):
+    try:
+        i = await query_info()
+    except (OSError, ValueError, asyncio.TimeoutError):
+        return web.json_response({'online': False}, headers={'Cache-Control': 'no-cache'})
+    return web.json_response({
+        'online': True, 'hostname': i.get('hostname', ''), 'map': i.get('mapname', ''),
+        'mapTitle': await asyncio.get_running_loop().run_in_executor(None, map_title, i.get('mapname', '')),
+        'players': int(i.get('clients', 0) or 0), 'maxPlayers': int(i.get('sv_maxclients', 0) or 0),
+        'mod': i.get('game', ''),
+    }, headers={'Cache-Control': 'no-cache'})
+
+
+async def levelshot_jpg(request):
+    mapname = request.match_info['map']
+    if '..' in mapname or not all(c.isalnum() or c in '/_-' for c in mapname):
+        raise web.HTTPNotFound()
+    data = await asyncio.get_running_loop().run_in_executor(None, levelshot, mapname)
+    if not data:
+        raise web.HTTPNotFound()
+    return web.Response(body=data, content_type='image/jpeg', headers={'Cache-Control': 'private, max-age=3600'})
+
+
 class UdpRelay(asyncio.DatagramProtocol):
     def __init__(self, ws):
         self.ws = ws
@@ -191,6 +282,8 @@ def make_app():
         web.get('/healthz', healthz),
         web.get('/ws', ws_bridge),
         web.get('/base/manifest.json', manifest),
+        web.get('/base/info.json', info),
+        web.get('/base/levelshot/{map:.+}.jpg', levelshot_jpg),
         web.get('/base/{name}', pak),
         web.get('/', static), web.get('/{path:.+}', static),
     ])

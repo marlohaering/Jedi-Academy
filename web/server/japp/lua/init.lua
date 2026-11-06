@@ -1,0 +1,2 @@
+-- JPLua bootstrap: JA++ loads lua/init.lua before the plugins in lua/sv/<name>/plugin.lua.
+-- Nothing to set up here; the plugins use the global JPLua API directly.
