@@ -25,7 +25,7 @@ local function show(id)
 end
 
 AddListener('JPLUA_EVENT_CLIENTBEGIN', function(ply)
-	if not greeted[ply.id] then
+	if not ply.isBot and not greeted[ply.id] then
 		greeted[ply.id] = true
 		show(ply.id)
 	end

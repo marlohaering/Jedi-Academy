@@ -70,6 +70,9 @@ podman run --rm -p 8080:8080 -e JKA_PASSWORD=secret -v ./data:/data:Z jka-mp
 - Log in at `/login`, open `/?timer`, click `#play`. `?timer` drives the main loop from a timer instead
   of `requestAnimationFrame`, which headless Chrome may not fire; `?log` shows the engine log, and F9
   toggles it.
+- Joining a game from headless Chrome on the desktop profile can stall in a reconnect loop while the
+  map loads (SwiftShader is too slow); add `?mobile` (smaller textures) to get to `ClientBegin`. A
+  persistent profile (`launchPersistentContext`) keeps the pk3 in Cache Storage between runs.
 - Phone mode: a context with `isMobile: true, hasTouch: true` and a landscape viewport (e.g. 915×412)
   is detected automatically; `?mobile` forces it in any context. `?timer` bypasses the 30 fps cap.
 - Touch tests: use a context with `hasTouch: true` but *without* `isMobile`, plus `?mobile`, and send

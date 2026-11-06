@@ -35,6 +35,9 @@ missing.
 
 * Welcome message: `welcome_motd` in `server.cfg`, shown after joining and again on `/ammotd`
   (`server/japp/lua/sv/welcome/plugin.lua`). `g_motd` is the line on the stock loading screen.
+* Companion bot: while at least one human is connected, a bot named `BOT` (Kyle Katarn's bot profile,
+  skill 3) plays along and is kicked when the last human leaves (`server/japp/lua/sv/companion/plugin.lua`,
+  needs `bot_enable 1`). Bot name, profile and skill are constants at the top of the plugin.
 * Admins: accounts in `admins.json` under `fs_homepath` (`/data/home/japlus/admins.json` on the volume,
   never in the repo), each with user, password, privilege bitmask and rank. Log in with
   `/amlogin <user> <password>`; rcon `adminadd`/`admindel`/`adminlist` manage them (`adminadd` echoes
