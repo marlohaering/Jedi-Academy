@@ -1,7 +1,7 @@
 # Mobile concept: the MP client on phones
 
-Status: concept agreed 2026-11-06. P1 and P2 are implemented (see "P1 results", "P2 results"); P3 and P4 are
-open.
+Status: concept agreed 2026-11-06. P1–P3 are implemented (see the results sections below); P4 is partly done
+(PWA and fullscreen).
 
 Goal: a phone player opens `jka.haering.me` in the browser and plays on the same FFA server as desktop
 players.
@@ -157,7 +157,7 @@ its cheap part (resolution, frame cap) moved into P1.
 |---|---|---|
 | **P1** Memory and resolution ✅ | No double copy. Hunk size and memory cap. `repack.py profile=mobile`. Manifest variant. Mobile resolution and frame cap | Loads and runs on the 9a (still without controls). Pk3 ≤ 200 MB. Tab memory and frame time measured |
 | **P2** Input ✅ | C API `web_move` / `web_look` / `web_key`. Touch overlay layout v1. Gamepad API | Move, aim, attack, jump, force and weapon all work by touch and gamepad |
-| **P3** Menus and chat | Auto `team free`. HTML pause menu. Quick-chat and keyboard chat | A full match from join to disconnect without the original menus |
+| **P3** Menus and chat ✅ | Auto `team free`. HTML pause menu. Quick-chat and keyboard chat | A full match from join to disconnect without the original menus |
 | **P4** PWA and polish | Manifest, persistent storage, wake lock, orientation screen, audio unlock, settings | Acceptance bar met. iOS pass on a real device |
 
 ## P1 results (2026-11-06)
@@ -208,6 +208,25 @@ fullscreen mode broke the overlay, and the page could not be installed.
 - Installable: `manifest.webmanifest` (`display: fullscreen`, `orientation: landscape`), icons, and a
   pass-through service worker `sw.js`. The gateway serves these four files without the session cookie,
   because browsers fetch the manifest and icons without credentials.
+
+## P3 results (2026-11-06)
+
+- The Menu button (and gamepad Start) opens an HTML pause menu, built in `touch.js`. The game keeps
+  running behind it, and movement and held buttons are released when it opens.
+  - Game: Resume, Join game (`team free`), Spectate (`team spectator`), Saber style.
+  - Chat: eight quick-chat buttons, plus a text field that opens the phone keyboard. `"`, `\` and `;`
+    are stripped before `say`.
+  - Settings: look speed, button size, opacity (live, `localStorage 'jka-touch'`), 30/60 fps
+    (`'jka-fps'`, applied at once through `setMaxFps`), rename (`name`, `'jka-name'`).
+  - Leave match: `disconnect`, then reload to the start screen.
+- If anything opens one of the original menus on a phone, it is closed again within 250 ms.
+- Text fields stop key events from bubbling to `window`, where SDL would swallow them.
+- Bug found and fixed: the click that follows the tap on Menu landed on the freshly opened menu (on
+  "Resume" with larger buttons) and closed it. The menu ignores clicks for 400 ms after opening.
+- The server refuses team changes within 5 s of the last one and prints a message. A second tap after
+  that works.
+- Tested headless against a local container: all menu actions arrive on the server (`say:`,
+  `ChangeTeam`, `ClientRename`, `ClientDisconnect`).
 
 ## Open risks
 

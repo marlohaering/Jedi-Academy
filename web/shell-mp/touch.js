@@ -8,7 +8,9 @@
 // Layout v1 (fixed): left part = floating move stick, right part = look-drag (also drags that start on
 // a button), right-thumb cluster attack / alt / jump / crouch, Force (tap/hold = selected power, the
 // chip above it opens the force radial), Weapon (tap = next, long press = weapon radial with saber
-// styles), top left Use / Menu / Scores. Settings in localStorage 'jka-touch': {size, opacity, look}.
+// styles), top left Use / Menu / Scores / fullscreen. Settings in localStorage 'jka-touch':
+// {size, opacity, look}. Menu (phones, P3): an HTML pause menu instead of the original UI menus, with
+// join/spectate, saber style, quick chat and typed chat, settings, name and leaving the match.
 (function () {
   'use strict';
   const WS = { state: 0, catcher: 1, valid: 2, weapons: 3, weapon: 4, forceKnown: 5, forceSel: 6,
@@ -89,6 +91,23 @@
     background:rgba(20,30,50,.85); border:2px solid rgba(200,220,255,.6); box-sizing:border-box; }
   #radial .it.cur { border-color:#ffe81f; }
   #radial .it.hot { background:rgba(74,163,255,.9); color:#000; }
+  #pmenu { position:fixed; inset:0; z-index:4; display:none; background:rgba(5,7,12,.82); overflow:auto;
+    font:14px/1.35 system-ui, sans-serif; color:#d8e2f0; padding:12px 16px; box-sizing:border-box; }
+  #pmenu.on { display:block; }
+  #pmenu .cols { display:flex; gap:16px; max-width:900px; margin:0 auto; flex-wrap:wrap; }
+  #pmenu section { flex:1 1 260px; min-width:0; }
+  #pmenu h2 { font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:#7d8aa0; margin:10px 0 6px; }
+  #pmenu button { font:inherit; color:#d8e2f0; background:#0c1220; border:1px solid #23324d; border-radius:8px;
+    padding:9px 12px; margin:0 6px 6px 0; min-height:40px; }
+  #pmenu button.primary { border-color:#4aa3ff; }
+  #pmenu button:active { background:#4aa3ff; color:#000; }
+  #pmenu .row { display:flex; gap:6px; align-items:center; margin-bottom:6px; }
+  #pmenu input[type=text] { flex:1; min-width:0; max-width:none; margin:0 6px 6px 0; text-align:left;
+    font:inherit; padding:9px 10px; border-radius:8px;
+    background:#0c1220; color:#d8e2f0; border:1px solid #23324d; }
+  #pmenu label { display:flex; align-items:center; gap:10px; margin:4px 0; }
+  #pmenu label span { width:96px; flex:none; color:#a9b6cc; }
+  #pmenu input[type=range] { flex:1; accent-color:#4aa3ff; }
   `;
   // [id, label, diameter, position (right/bottom/left/top in px, scaled by --s)]
   const BUTTONS = [
@@ -124,7 +143,7 @@
     knob = document.createElement('div'); knob.className = 'stick knob';
     root.append(base, knob);
     radial = document.createElement('div'); radial.id = 'radial';
-    document.body.append(root, radial);
+    document.body.append(root, radial, buildMenu());
     root.addEventListener('pointerdown', onDown);
     root.addEventListener('pointermove', onMove);
     root.addEventListener('pointerup', onUp);
@@ -195,7 +214,7 @@
     const b = p.btn;
     if (HOLD[b]) cmd('+' + HOLD[b]);
     else if (b === 'force') forceDown();
-    else if (b === 'menu') key(K_ESCAPE);
+    else if (b === 'menu') touchMode ? openMenu() : key(K_ESCAPE);
     else if (b === 'forcesel') openForceRadial(p);
     else if (b === 'weapon') p.timer = setTimeout(() => { p.timer = null; p.radial = true; openWeaponRadial(p); }, 400);
   }
@@ -297,7 +316,7 @@
       else if (i === 5) cmd('weapnext');
       else if (i === 13) cmd('weapprev');
       else if (i === 12) cmd('saberAttackCycle');
-      else if (i === 9) key(K_ESCAPE);
+      else if (i === 9) touchMode ? (menu.classList.contains('on') ? closeMenu() : openMenu()) : key(K_ESCAPE);
     });
     if (pad.buttons.some(b => b.pressed)) root.classList.remove('on'), padActive = true;
   }
@@ -309,6 +328,104 @@
     const i = known.indexOf(forcePower());
     forceSel = known[(i + dir + known.length) % known.length];
     updateChip();
+  }
+
+  // ---------- pause menu (phones) ----------
+  const QUICK_CHAT = ['gg', 'Nice!', 'Hi all', '1v1?', 'Sorry', 'Thanks', 'brb', 'lol'];
+  let menu, openedAt = 0;
+  const clean = t => t.replace(/["\\;\n\r]/g, '').trim().slice(0, 150);
+  function say(t) { t = clean(t); if (t) cmd('say "' + t + '"'); }
+  function saveSettings() { try { localStorage.setItem('jka-touch', JSON.stringify(settings)); } catch (e) {} }
+  function applySettings() { root.style.setProperty('--s', settings.size); root.style.setProperty('--o', settings.opacity); }
+  function buildMenu() {
+    menu = document.createElement('div'); menu.id = 'pmenu';
+    menu.innerHTML = `
+      <div class="cols">
+        <section>
+          <h2>Game</h2>
+          <button class="primary" data-a="resume">Resume</button>
+          <button data-a="join">Join game</button><button data-a="spec">Spectate</button>
+          <button data-a="style">Saber style</button>
+          <h2>Chat</h2>
+          <div class="quick"></div>
+          <div class="row"><input type="text" id="pm-say" maxlength="150" placeholder="Message" enterkeyhint="send">
+            <button data-a="say">Send</button></div>
+        </section>
+        <section>
+          <h2>Settings</h2>
+          <label><span>Look speed</span><input type="range" id="pm-look" min="0.5" max="6" step="0.1"></label>
+          <label><span>Button size</span><input type="range" id="pm-size" min="0.7" max="1.5" step="0.05"></label>
+          <label><span>Opacity</span><input type="range" id="pm-opacity" min="0.15" max="1" step="0.05"></label>
+          <div class="row"><span style="width:96px;color:#a9b6cc">Frame rate</span>
+            <button data-a="fps30">30 fps</button><button data-a="fps60">60 fps</button></div>
+          <div class="row"><input type="text" id="pm-name" maxlength="31" placeholder="Name" enterkeyhint="done">
+            <button data-a="name">Rename</button></div>
+          <h2>&nbsp;</h2>
+          <button data-a="leave">Leave match</button>
+        </section>
+      </div>`;
+    // SDL listens for keys on window (bubbling) and would eat what is typed into the text fields
+    for (const t of ['keydown', 'keyup', 'keypress']) menu.addEventListener(t, e => e.stopPropagation());
+    const quick = menu.querySelector('.quick');
+    for (const t of QUICK_CHAT) {
+      const b = document.createElement('button'); b.textContent = t; b.dataset.a = 'quick';
+      quick.appendChild(b);
+    }
+    const $ = id => menu.querySelector('#' + id);
+    for (const k of ['look', 'size', 'opacity']) {
+      const el = $('pm-' + k);
+      el.value = settings[k];
+      el.addEventListener('input', () => { settings[k] = +el.value; applySettings(); saveSettings(); });
+    }
+    const sayEl = $('pm-say'), nameEl = $('pm-name');
+    sayEl.addEventListener('keydown', e => { if (e.key === 'Enter') { say(sayEl.value); sayEl.value = ''; sayEl.blur(); } });
+    menu.addEventListener('click', e => {
+      // the tap that opened the menu is followed by a click at the same spot, now on the menu
+      if (performance.now() - openedAt < 400) return;
+      const b = e.target.closest('[data-a]');
+      if (!b) return;
+      switch (b.dataset.a) {
+        case 'resume': closeMenu(); break;
+        case 'join': cmd('team free'); closeMenu(); break;
+        case 'spec': cmd('team spectator'); closeMenu(); break;
+        case 'style': cmd('saberAttackCycle'); closeMenu(); break;
+        case 'quick': say(b.textContent); closeMenu(); break;
+        case 'say': say(sayEl.value); sayEl.value = ''; closeMenu(); break;
+        case 'fps30': case 'fps60': {
+          const fps = b.dataset.a === 'fps30' ? 30 : 60;
+          try { localStorage.setItem('jka-fps', fps); } catch (err) {}
+          if (window.setMaxFps) setMaxFps(fps);
+          markFps(); break;
+        }
+        case 'name': {
+          const n = nameEl.value.replace(/["\\;]/g, '').trim().slice(0, 31);
+          if (n) { cmd('name "' + n + '"'); try { localStorage.setItem('jka-name', n); } catch (err) {} }
+          nameEl.blur(); break;
+        }
+        case 'leave': cmd('disconnect'); setTimeout(() => location.reload(), 300); break;
+      }
+    });
+    return menu;
+  }
+  function markFps() {
+    let fps = 30;
+    try { fps = +localStorage.getItem('jka-fps') || 30; } catch (e) {}
+    menu.querySelector('[data-a=fps30]').classList.toggle('primary', fps === 30);
+    menu.querySelector('[data-a=fps60]').classList.toggle('primary', fps === 60);
+  }
+  function openMenu() {
+    releaseAll();
+    try { menu.querySelector('#pm-name').value = localStorage.getItem('jka-name') || ''; } catch (e) {}
+    markFps();
+    openedAt = performance.now();
+    menu.classList.add('on');
+  }
+  function closeMenu() { menu.classList.remove('on'); document.activeElement && document.activeElement.blur(); }
+  // stop moving and release held buttons (menu opens, overlay hides)
+  function releaseAll() {
+    for (const id of [...ptrs.keys()]) onUp({ pointerId: id });
+    M._web_move(0, 0);
+    forceUp();
   }
 
   // ---------- show / hide, auto-join ----------
@@ -323,10 +440,12 @@
       if (st[WS.team] === TEAM_SPECTATOR) cmd('team free');
       if (st[WS.catcher] & KEYCATCH_UI) key(K_ESCAPE);
     }
+    // the original menus cannot be used by touch: close them if anything opens one (P3 menu replaces them)
+    if (touchMode && joined && (st[WS.catcher] & KEYCATCH_UI)) key(K_ESCAPE);
     const blocked = st[WS.catcher] & (KEYCATCH_CONSOLE | KEYCATCH_UI | KEYCATCH_MESSAGE);
-    const show = touchMode && active && !blocked && !padActive;
+    const show = touchMode && active && !blocked && !padActive && !menu.classList.contains('on');
     root.classList.toggle('on', show);
-    if (!show && ptrs.size) { for (const id of [...ptrs.keys()]) onUp({ pointerId: id }); }
+    if (!show && ptrs.size) releaseAll();
     if (show) updateChip();
   }
 
