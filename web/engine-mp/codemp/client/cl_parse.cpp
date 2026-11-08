@@ -515,6 +515,15 @@ void CL_ParseGamestate( msg_t *msg ) {
 
 	// a gamestate always marks a server command sequence
 	clc.serverCommandSequence = MSG_ReadLong( msg );
+#ifdef __EMSCRIPTEN__
+    // HTTP map preparation can outlast the reliable-command ring. This complete
+    // gamestate already contains the authoritative configstrings up to its sequence.
+    // Resume there only if the older checkpoint is irrecoverable; keep normal
+    // pre-gamestate command replay when its history is still available.
+    if (clc.lastExecutedServerCommand < clc.serverCommandSequence - MAX_RELIABLE_COMMANDS) {
+        clc.lastExecutedServerCommand = clc.serverCommandSequence;
+    }
+#endif
 
 	// parse all the configstrings and baselines
 	cl.gameState.dataCount = 1;	// leave a 0 at the beginning for uninitialized configstrings

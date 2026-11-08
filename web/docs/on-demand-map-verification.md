@@ -47,3 +47,28 @@ as part of the final checks.
 Auto-stop was temporarily disabled for file transfer and restored after the user approved the
 final restart. Live configuration confirms auto-stop enabled, performance CPU, one vCPU and
 2048 MiB RAM. The repository fly.toml continues to specify auto-stop=stop and performance-1x / 2 GB.
+
+## hoth2 reliable-command recovery
+
+A cold/slow hoth2 download can receive and acknowledge more than the engine's 128 reliable
+server-command history entries before cgame starts consuming them. The fresh post-download
+gamestate supplies authoritative configstrings, but the previous executed-command checkpoint
+can still point outside that history. Reproduced the reported `CL_GetServerCommand: a reliable
+command was cycled out` error with a 35-second download and 165 server messages.
+
+The browser client now rebases an irrecoverably old checkpoint to the complete gamestate's
+sequence. Normal pre-gamestate replay remains unchanged when the required history is available;
+active-game overflow checks are not bypassed. The same regression passes with the fix. Quiet
+hoth2 entry also passed. Pinned Emscripten build and existing Python/Node suites pass.
+
+Reproducible local browser regression (never use the live server):
+
+```sh
+PLAYWRIGHT_MODULE=/path/to/existing/playwright \
+JKA_TEST_CONTAINER=jka-on-demand-test \
+node web/tests/map-download-reliable.cjs
+```
+
+The fixture expects the documented localhost gateway on 8282, local-only-test credentials,
+readable map packages at /data/web/map-paks, and engine home /tmp/home. No game assets are in git.
+The run also logs unrelated missing Hoth texture/music warnings; those are outside this fix.
