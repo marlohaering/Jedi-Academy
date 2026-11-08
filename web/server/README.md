@@ -70,7 +70,8 @@ rcon exec fill-bots.cfg
 
 The config removes existing bots (humans stay connected), disables `bot_minplayers`,
 pauses the Companion Lua plugin via `companion_paused 1`, then tries each of the 43 stock
-`botlist` names exactly once with `addbot "name" 5 free 0`. All added bots are skill 5.
+`botlist` names exactly once with `addbot "name" 5 free 0`. All added bots are skill 5. The fixed, mixed order interleaves shuffled light-side and other
+profiles, so Jedi are represented before the slot limit is reached; executing again uses the same order.
 Names come from the stock `botfiles/bots.txt`; no original asset files are distributed.
 Repeated execution replaces the roster rather than adding duplicate bots.
 Once all slots are occupied, subsequent commands report no free slots; that is expected.
@@ -89,3 +90,6 @@ Both configs are included in `/opt/openjk/base/` by the image build. They and th
 Companion plugin must be installed on the server before use. Merely saving them on the client
 is insufficient: `rcon exec` reads the server filesystem. An existing copy on the data volume
 may override the image copy; update/remove that copy if necessary.
+
+The live server keeps a mirrored copy of `fill-bots.cfg` on the volume at `/data/base/fill-bots.cfg`
+to allow updates without a restart. Keep this copy in sync when changing the packaged config.
