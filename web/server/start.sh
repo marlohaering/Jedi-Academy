@@ -58,6 +58,7 @@ export CLIENT_DATA_DIR
   +set fs_cdpath /opt/openjk +set fs_basepath "$(dirname "$DATA_DIR")" +set fs_homepath "$(dirname "$DATA_DIR")/home" \
   +exec server.cfg &
 GAME_PID=$!
+export GAME_PID
 python3 /opt/gateway/gateway.py &
 WEB_PID=$!
 # exit (and let fly restart the machine) when either process dies

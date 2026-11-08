@@ -23,6 +23,10 @@ AddListener('JPLUA_EVENT_RUNFRAME', function()
 	if now < nextCheck then return end
 	nextCheck = now + CHECK_MS
 
+	-- RCON bot-fill configs manage the whole roster while this is set.
+	local paused = GetCvar('companion_paused')
+	if paused and paused:GetString() == '1' then return end
+
 	local humans, bots = 0, {}
 	for _, ply in pairs(GetPlayers()) do
 		if not ply.isBot then

@@ -59,3 +59,33 @@ fly machine restart
 
 The pk3 files are copyrighted game data: keep the server password-protected and only share it
 with people who own the game.
+
+## Fill the server with unique skill-5 bots
+
+From the client console (with RCON configured):
+
+```text
+rcon exec fill-bots.cfg
+```
+
+The config removes existing bots (humans stay connected), disables `bot_minplayers`,
+pauses the Companion Lua plugin via `companion_paused 1`, then tries each of the 43 stock
+`botlist` names exactly once with `addbot "name" 5 free 0`. All added bots are skill 5.
+Names come from the stock `botfiles/bots.txt`; no original asset files are distributed.
+Repeated execution replaces the roster rather than adding duplicate bots.
+Once all slots are occupied, subsequent commands report no free slots; that is expected.
+This is an FFA config and does not continuously refill slots or execute itself on map changes.
+
+The current default `sv_maxclients` is 32: one human leaves room for 31 bots. This script
+does not change the slot limit or restart the map. For a larger test, configure the desired
+`sv_maxclients` separately and apply it with a map change before executing the config.
+To remove the bots and resume the usual skill-3 companion:
+
+```text
+rcon exec clear-bots.cfg
+```
+
+Both configs are included in `/opt/openjk/base/` by the image build. They and the updated
+Companion plugin must be installed on the server before use. Merely saving them on the client
+is insufficient: `rcon exec` reads the server filesystem. An existing copy on the data volume
+may override the image copy; update/remove that copy if necessary.

@@ -26,6 +26,8 @@ import re
 import time
 import zipfile
 
+from metrics import ProcessMetrics
+
 from aiohttp import WSMsgType, web
 
 log = logging.getLogger('gateway')
@@ -106,6 +108,39 @@ async def login_post(request):
 
 async def healthz(request):
     return web.Response(text='ok')
+
+
+async def sample_metrics(app):
+    sampler = ProcessMetrics(os.environ.get('GAME_PID', 'unknown'))
+    while True:
+        values = sampler.sample(time.monotonic())
+        started = time.monotonic()
+        try:
+            await query_info()
+            values.update(online=True, responseMs=round((time.monotonic() - started) * 1000, 1))
+        except (OSError, ValueError, asyncio.TimeoutError):
+            values.update(online=False, responseMs=None)
+        app['server_metrics'].update(values, sampledAt=time.monotonic())
+        await asyncio.sleep(2)
+
+
+async def metrics_lifecycle(app):
+    task = asyncio.create_task(sample_metrics(app))
+    try:
+        yield
+    finally:
+        task.cancel()
+        try:
+            await task
+        except asyncio.CancelledError:
+            pass
+
+
+async def server_metrics(request):
+    values = dict(request.app['server_metrics'])
+    sampled_at = values.pop('sampledAt', None)
+    values['ageSeconds'] = None if sampled_at is None else round(time.monotonic() - sampled_at, 1)
+    return web.json_response(values, headers={'Cache-Control': 'no-store'})
 
 
 def pak_list(mobile):
@@ -289,9 +324,12 @@ def make_app():
     if not PASSWORD:
         raise SystemExit('JKA_PASSWORD must be set')
     app = web.Application(middlewares=[auth])
+    app['server_metrics'] = {'online': None, 'cpuPercent': None, 'ramMb': None, 'responseMs': None}
+    app.cleanup_ctx.append(metrics_lifecycle)
     app.add_routes([
         web.get('/login', login_get), web.post('/login', login_post),
         web.get('/healthz', healthz),
+        web.get('/base/metrics.json', server_metrics),
         web.get('/ws', ws_bridge),
         web.get('/base/manifest.json', manifest),
         web.get('/base/info.json', info),

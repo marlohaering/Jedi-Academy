@@ -88,6 +88,11 @@
   #log { position:fixed; left:0; right:0; bottom:0; max-height:35vh; overflow:auto; margin:0; padding:6px 10px;
     font:11px/1.35 ui-monospace, monospace; background:rgba(0,0,0,.8); color:#9fb; z-index:3; display:none; white-space:pre-wrap; }
   #log.show { display:block; }
+  #server-load { position:fixed; top:max(3px, env(safe-area-inset-top)); left:50%; transform:translateX(-50%);
+    z-index:3; pointer-events:none; white-space:nowrap; padding:2px 7px; border-radius:4px;
+    background:rgba(0,0,0,.65); color:#b9c8d8; font:10px/1.4 ui-monospace,monospace; }
+  #server-load[data-level="warn"] { color:#ffe082; }
+  #server-load[data-level="bad"] { color:#ff9292; }
   /* phones: landscape only (web/MOBILE.md) */
   #rotate { position:fixed; inset:0; z-index:5; display:none; align-items:center; justify-content:center;
     background:var(--bg); color:var(--fg); font-size:18px; text-align:center; padding:0 24px; }
@@ -121,6 +126,7 @@
   </div>
 </div>
 <pre id="log"></pre>
+<div id="server-load" data-level="warn" title="Dedicated server CPU: 100% = one core. RAM: resident MiB. Response: gateway to game server, not network ping.">Server · unknown</div>
 <div id="rotate">Turn your phone sideways to play.</div>
 <script>
 (function () {
@@ -445,6 +451,7 @@
 })();
 </script>
 <script src="touch.js"></script>
+<script src="server-load.js"></script>
 <script async src="openjk_mp.js"></script>
 </body>
 </html>

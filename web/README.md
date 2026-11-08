@@ -29,7 +29,7 @@ Browser                                  fly.io machine (jka-web-ffa, fra)
 │ Emscripten sockets ──┼── as WebSocket ─┼──▶ one UDP socket per browser ──┐           │
 └──────────────────────┘    messages     │                                 ▼           │
                                          │ openjkded (OpenJK dedicated, 127.0.0.1:29070)│
-                                         │  mp/duel1, g_gametype 0 (FFA), 16 slots      │
+                                         │  mp/duel1, g_gametype 0 (FFA), 32 slots      │
                                          │ /data volume: base/assets0-3.pk3, web/*.pk3  │
                                          └──────────────────────────────────────────────┘
 ```
@@ -157,3 +157,13 @@ Emscripten.
 ```sh
 ./build.sh && python3 -m http.server -d dist 8000   # http://localhost:8000/?map=academy
 ```
+
+### Server load indicator
+
+The small, persistent top indicator shows dedicated-server process CPU (100% = one core),
+resident RAM in MiB and UDP getinfo response time from the gateway to the game server (not player ping).
+The gateway samples once every two seconds for all players; `/base/metrics.json` requires login.
+CPU at 80/95% or response time at 100/250 ms turns the indicator yellow/red; a missing UDP response is red.
+Unavailable or stale data is explicitly marked unknown. CPU starts unknown until two samples exist.
+`start.sh` exports `GAME_PID` for procfs sampling. No additional Python packages or engine build are needed.
+These are diagnostic signals, not a measurement of engine tick rate or proof of a map-change bug.
