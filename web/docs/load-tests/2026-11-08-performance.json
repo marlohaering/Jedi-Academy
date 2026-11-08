@@ -1,0 +1,1781 @@
+[
+  {
+    "summary": {
+      "stage": "idle",
+      "seconds": 12,
+      "samples": 11,
+      "players": [
+        0
+      ],
+      "maps": [
+        "mp/duel1"
+      ],
+      "cpuAvg": 3.3,
+      "cpuMax": 4.5,
+      "ramMaxMiB": 161.5,
+      "replyP95Ms": 0.2,
+      "replyMaxMs": 0.2,
+      "timeouts": 0,
+      "stealAvg": 0.0
+    },
+    "samples": [
+      {
+        "cpuPercent": 0.0,
+        "ramMb": 161.5390625,
+        "replyMs": 0.13790999999940823,
+        "map": "mp/duel1",
+        "players": 0,
+        "maxPlayers": "32",
+        "stealPercent": null
+      },
+      {
+        "cpuPercent": 2.726930038932791,
+        "ramMb": 161.5390625,
+        "replyMs": 0.13831000000052995,
+        "map": "mp/duel1",
+        "players": 0,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 3.636020875286677,
+        "ramMb": 161.5390625,
+        "replyMs": 0.17030999999789742,
+        "map": "mp/duel1",
+        "players": 0,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 3.6360096080244837,
+        "ramMb": 161.5390625,
+        "replyMs": 0.16633999999982052,
+        "map": "mp/duel1",
+        "players": 0,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 4.544959458888907,
+        "ramMb": 161.5390625,
+        "replyMs": 0.14232999999919116,
+        "map": "mp/duel1",
+        "players": 0,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 3.63589482078009,
+        "ramMb": 161.5390625,
+        "replyMs": 0.14183999999772823,
+        "map": "mp/duel1",
+        "players": 0,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 3.6359683272762475,
+        "ramMb": 161.5390625,
+        "replyMs": 0.1489100000000576,
+        "map": "mp/duel1",
+        "players": 0,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 3.6359889807536017,
+        "ramMb": 161.5390625,
+        "replyMs": 0.1673300000035738,
+        "map": "mp/duel1",
+        "players": 0,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 3.635924370424295,
+        "ramMb": 161.5390625,
+        "replyMs": 0.14829100000213202,
+        "map": "mp/duel1",
+        "players": 0,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 2.7270698952513923,
+        "ramMb": 161.5390625,
+        "replyMs": 0.15759000000059586,
+        "map": "mp/duel1",
+        "players": 0,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 4.544923347208946,
+        "ramMb": 161.5390625,
+        "replyMs": 0.14012000000462876,
+        "map": "mp/duel1",
+        "players": 0,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      }
+    ]
+  },
+  {
+    "summary": {
+      "stage": "16 bots",
+      "seconds": 22,
+      "samples": 20,
+      "players": [
+        16
+      ],
+      "maps": [
+        "mp/duel1"
+      ],
+      "cpuAvg": 8.7,
+      "cpuMax": 11.8,
+      "ramMaxMiB": 164.9,
+      "replyP95Ms": 0.2,
+      "replyMaxMs": 0.2,
+      "timeouts": 0,
+      "stealAvg": 0.0
+    },
+    "samples": [
+      {
+        "cpuPercent": 0.0,
+        "ramMb": 164.1015625,
+        "replyMs": 0.12680000000386826,
+        "map": "mp/duel1",
+        "players": 16,
+        "maxPlayers": "32",
+        "stealPercent": null
+      },
+      {
+        "cpuPercent": 10.908255287152938,
+        "ramMb": 164.1015625,
+        "replyMs": 0.16894000000178266,
+        "map": "mp/duel1",
+        "players": 16,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 9.090104087818561,
+        "ramMb": 164.1015625,
+        "replyMs": 0.13387100000272767,
+        "map": "mp/duel1",
+        "players": 16,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 9.09001913671735,
+        "ramMb": 164.1015625,
+        "replyMs": 0.18839999999897827,
+        "map": "mp/duel1",
+        "players": 16,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 9.998923806740695,
+        "ramMb": 164.2265625,
+        "replyMs": 0.16541000000103168,
+        "map": "mp/duel1",
+        "players": 16,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 11.81694444444369,
+        "ramMb": 164.2265625,
+        "replyMs": 0.15309000000485185,
+        "map": "mp/duel1",
+        "players": 16,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 9.090010716886287,
+        "ramMb": 164.2265625,
+        "replyMs": 0.14688100000626036,
+        "map": "mp/duel1",
+        "players": 16,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 8.18110750388409,
+        "ramMb": 164.3515625,
+        "replyMs": 0.1277400000034845,
+        "map": "mp/duel1",
+        "players": 16,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 10.908116972908758,
+        "ramMb": 164.3515625,
+        "replyMs": 0.13071999999425543,
+        "map": "mp/duel1",
+        "players": 16,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 9.090232323112614,
+        "ramMb": 164.3515625,
+        "replyMs": 0.12388999999757289,
+        "map": "mp/duel1",
+        "players": 16,
+        "maxPlayers": "32",
+        "stealPercent": 0.9
+      },
+      {
+        "cpuPercent": 10.908070260789446,
+        "ramMb": 164.3515625,
+        "replyMs": 0.1432399999998779,
+        "map": "mp/duel1",
+        "players": 16,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 9.09008095147962,
+        "ramMb": 164.4765625,
+        "replyMs": 0.15411999999059844,
+        "map": "mp/duel1",
+        "players": 16,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 8.181116056126056,
+        "ramMb": 164.4765625,
+        "replyMs": 0.14917000000025382,
+        "map": "mp/duel1",
+        "players": 16,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 8.18110721385185,
+        "ramMb": 164.4765625,
+        "replyMs": 0.17405100000189577,
+        "map": "mp/duel1",
+        "players": 16,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 9.09023241400815,
+        "ramMb": 164.4765625,
+        "replyMs": 0.13194100000646358,
+        "map": "mp/duel1",
+        "players": 16,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 7.272048096489871,
+        "ramMb": 164.6015625,
+        "replyMs": 0.15625999999713258,
+        "map": "mp/duel1",
+        "players": 16,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 9.090016327350934,
+        "ramMb": 164.7265625,
+        "replyMs": 0.15741999999363543,
+        "map": "mp/duel1",
+        "players": 16,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 7.272169470884664,
+        "ramMb": 164.7265625,
+        "replyMs": 0.1059400000116284,
+        "map": "mp/duel1",
+        "players": 16,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 8.181040804446305,
+        "ramMb": 164.7265625,
+        "replyMs": 0.16741999999680957,
+        "map": "mp/duel1",
+        "players": 16,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 9.090115160250939,
+        "ramMb": 164.8515625,
+        "replyMs": 0.12563999999315456,
+        "map": "mp/duel1",
+        "players": 16,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      }
+    ]
+  },
+  {
+    "summary": {
+      "stage": "32 bots",
+      "seconds": 30,
+      "samples": 28,
+      "players": [
+        32
+      ],
+      "maps": [
+        "mp/duel1"
+      ],
+      "cpuAvg": 15.5,
+      "cpuMax": 18.2,
+      "ramMaxMiB": 168.0,
+      "replyP95Ms": 0.2,
+      "replyMaxMs": 0.2,
+      "timeouts": 0,
+      "stealAvg": 0.0
+    },
+    "samples": [
+      {
+        "cpuPercent": 0.0,
+        "ramMb": 167.2265625,
+        "replyMs": 0.13515999999924588,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": null
+      },
+      {
+        "cpuPercent": 17.270470885706033,
+        "ramMb": 167.2265625,
+        "replyMs": 0.19298000000844695,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 17.271177812561554,
+        "ramMb": 167.2265625,
+        "replyMs": 0.16528999999820826,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 16.362144374064147,
+        "ramMb": 167.3515625,
+        "replyMs": 0.1432399999998779,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 16.362039651685112,
+        "ramMb": 167.4765625,
+        "replyMs": 0.1586599999967575,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 15.453008526413878,
+        "ramMb": 167.6015625,
+        "replyMs": 0.1430809999902749,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 17.2711886453352,
+        "ramMb": 167.6015625,
+        "replyMs": 0.1361100000139004,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 17.271281446653713,
+        "ramMb": 167.7265625,
+        "replyMs": 0.1382099999887032,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 15.452988706415088,
+        "ramMb": 167.8515625,
+        "replyMs": 0.16481000000112545,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 15.45294377097174,
+        "ramMb": 167.8515625,
+        "replyMs": 0.1428000000061047,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 13.635137279721052,
+        "ramMb": 167.9765625,
+        "replyMs": 0.17835999999249452,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 15.453230454875731,
+        "ramMb": 167.9765625,
+        "replyMs": 0.1550399999956653,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 16.362209816936108,
+        "ramMb": 167.9765625,
+        "replyMs": 0.15528999999503412,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 16.36212725489031,
+        "ramMb": 167.9765625,
+        "replyMs": 0.14196000000765707,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 15.452817071004189,
+        "ramMb": 167.9765625,
+        "replyMs": 0.1410400000025902,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 13.635321092108585,
+        "ramMb": 167.9765625,
+        "replyMs": 0.13072000000136086,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 15.453175965994628,
+        "ramMb": 167.9765625,
+        "replyMs": 0.1315300000044317,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 16.36225709973681,
+        "ramMb": 167.9765625,
+        "replyMs": 0.13484000000119067,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 16.362164601805194,
+        "ramMb": 167.9765625,
+        "replyMs": 0.1384210000026087,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.9
+      },
+      {
+        "cpuPercent": 16.362040990266937,
+        "ramMb": 167.9765625,
+        "replyMs": 0.14778000000603697,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 16.362144805390543,
+        "ramMb": 167.9765625,
+        "replyMs": 0.1434999999929687,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 16.362213550170097,
+        "ramMb": 167.9765625,
+        "replyMs": 0.17431000000556196,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 18.180257241458996,
+        "ramMb": 167.9765625,
+        "replyMs": 0.18122999999548028,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 17.270937297085034,
+        "ramMb": 167.9765625,
+        "replyMs": 0.15536000000793138,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 14.544143404148617,
+        "ramMb": 167.9765625,
+        "replyMs": 0.1485599999995202,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 13.635256143672576,
+        "ramMb": 167.9765625,
+        "replyMs": 0.16382000001158303,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 18.180162233477326,
+        "ramMb": 167.9765625,
+        "replyMs": 0.14645999999629566,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 15.452839685812803,
+        "ramMb": 167.9765625,
+        "replyMs": 0.16281000000617496,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      }
+    ]
+  },
+  {
+    "summary": {
+      "stage": "32 bots map change duel2",
+      "seconds": 30,
+      "samples": 28,
+      "players": [
+        32
+      ],
+      "maps": [
+        "mp/duel2"
+      ],
+      "cpuAvg": 24.5,
+      "cpuMax": 30.9,
+      "ramMaxMiB": 169.1,
+      "replyP95Ms": 0.2,
+      "replyMaxMs": 2.5,
+      "timeouts": 0,
+      "stealAvg": 0.1
+    },
+    "samples": [
+      {
+        "cpuPercent": 0.0,
+        "ramMb": 169.140625,
+        "replyMs": 0.1532099999934644,
+        "map": "mp/duel2",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": null
+      },
+      {
+        "cpuPercent": 13.635050655358471,
+        "ramMb": 169.140625,
+        "replyMs": 0.19849100000612907,
+        "map": "mp/duel2",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 19.998245517560367,
+        "ramMb": 169.140625,
+        "replyMs": 0.15695999999820742,
+        "map": "mp/duel2",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 23.63400829258262,
+        "ramMb": 169.140625,
+        "replyMs": 0.14591000000052645,
+        "map": "mp/duel2",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 25.451310269084583,
+        "ramMb": 169.140625,
+        "replyMs": 0.22975000000258206,
+        "map": "mp/duel2",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.9
+      },
+      {
+        "cpuPercent": 25.451722048742624,
+        "ramMb": 169.140625,
+        "replyMs": 0.1527699999996912,
+        "map": "mp/duel2",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 27.269776137553947,
+        "ramMb": 169.140625,
+        "replyMs": 0.19741999999212112,
+        "map": "mp/duel2",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 29.087661982315232,
+        "ramMb": 169.140625,
+        "replyMs": 0.15305999998815878,
+        "map": "mp/duel2",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 29.08611794623509,
+        "ramMb": 169.140625,
+        "replyMs": 0.21467000000541248,
+        "map": "mp/duel2",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 30.9061193138156,
+        "ramMb": 169.140625,
+        "replyMs": 0.22485999998878015,
+        "map": "mp/duel2",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 29.088109095971117,
+        "ramMb": 169.140625,
+        "replyMs": 0.14409999999998035,
+        "map": "mp/duel2",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 30.906126337259508,
+        "ramMb": 169.140625,
+        "replyMs": 0.14224099999182727,
+        "map": "mp/duel2",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 27.26931154355358,
+        "ramMb": 169.140625,
+        "replyMs": 0.16083000001287928,
+        "map": "mp/duel2",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 25.45234995797648,
+        "ramMb": 169.140625,
+        "replyMs": 0.14034000000151536,
+        "map": "mp/duel2",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 23.634254515490632,
+        "ramMb": 169.140625,
+        "replyMs": 0.1433799999972507,
+        "map": "mp/duel2",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 24.542819003680528,
+        "ramMb": 169.140625,
+        "replyMs": 0.15963999999257794,
+        "map": "mp/duel2",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 22.72504724273717,
+        "ramMb": 169.140625,
+        "replyMs": 0.14659999999366846,
+        "map": "mp/duel2",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 23.634052118638543,
+        "ramMb": 169.140625,
+        "replyMs": 0.15060000001199114,
+        "map": "mp/duel2",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.9
+      },
+      {
+        "cpuPercent": 28.179116982898766,
+        "ramMb": 169.140625,
+        "replyMs": 0.14493999998421714,
+        "map": "mp/duel2",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 25.45162441788706,
+        "ramMb": 169.140625,
+        "replyMs": 0.20827999998118685,
+        "map": "mp/duel2",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 24.54285492163772,
+        "ramMb": 169.140625,
+        "replyMs": 0.20935999998528132,
+        "map": "mp/duel2",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 26.36135744824957,
+        "ramMb": 169.140625,
+        "replyMs": 0.15106000000741915,
+        "map": "mp/duel2",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 28.179120287225036,
+        "ramMb": 169.140625,
+        "replyMs": 0.1399600000127066,
+        "map": "mp/duel2",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 26.36058994214901,
+        "ramMb": 169.140625,
+        "replyMs": 2.5230919999899015,
+        "map": "mp/duel2",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 24.54300551049387,
+        "ramMb": 169.140625,
+        "replyMs": 0.16948000001093533,
+        "map": "mp/duel2",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 24.54362637997524,
+        "ramMb": 169.140625,
+        "replyMs": 0.1669799999888255,
+        "map": "mp/duel2",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 25.452639422072718,
+        "ramMb": 169.140625,
+        "replyMs": 0.136341000001039,
+        "map": "mp/duel2",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 21.81603283978325,
+        "ramMb": 169.140625,
+        "replyMs": 0.1549499999953241,
+        "map": "mp/duel2",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      }
+    ]
+  },
+  {
+    "summary": {
+      "stage": "32 bots map change ffa3",
+      "seconds": 45,
+      "samples": 41,
+      "players": [
+        32
+      ],
+      "maps": [
+        "mp/ffa3"
+      ],
+      "cpuAvg": 19.1,
+      "cpuMax": 24.5,
+      "ramMaxMiB": 171.7,
+      "replyP95Ms": 0.2,
+      "replyMaxMs": 0.3,
+      "timeouts": 0,
+      "stealAvg": 0.0
+    },
+    "samples": [
+      {
+        "cpuPercent": 0.0,
+        "ramMb": 171.55078125,
+        "replyMs": 0.1323300000137806,
+        "map": "mp/ffa3",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": null
+      },
+      {
+        "cpuPercent": 14.544244001582136,
+        "ramMb": 171.55078125,
+        "replyMs": 0.12680000000386826,
+        "map": "mp/ffa3",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 16.36213231181025,
+        "ramMb": 171.55078125,
+        "replyMs": 0.15475000000719774,
+        "map": "mp/ffa3",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 19.08871763671091,
+        "ramMb": 171.55078125,
+        "replyMs": 0.1759399999912148,
+        "map": "mp/ffa3",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 19.089230887206437,
+        "ramMb": 171.55078125,
+        "replyMs": 0.13398000001529908,
+        "map": "mp/ffa3",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 18.18020918372311,
+        "ramMb": 171.55078125,
+        "replyMs": 0.13723000000709362,
+        "map": "mp/ffa3",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 18.17992525494577,
+        "ramMb": 171.55078125,
+        "replyMs": 0.2594610000130615,
+        "map": "mp/ffa3",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 19.089205726374765,
+        "ramMb": 171.55078125,
+        "replyMs": 0.17403000001081637,
+        "map": "mp/ffa3",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 17.271179398227552,
+        "ramMb": 171.55078125,
+        "replyMs": 0.14211999999247382,
+        "map": "mp/ffa3",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 20.907101408327133,
+        "ramMb": 171.55078125,
+        "replyMs": 0.14181999998186257,
+        "map": "mp/ffa3",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 17.271101198549687,
+        "ramMb": 171.67578125,
+        "replyMs": 0.18704000001434906,
+        "map": "mp/ffa3",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 15.453031282250928,
+        "ramMb": 171.67578125,
+        "replyMs": 0.16450000001100307,
+        "map": "mp/ffa3",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 16.362102565267318,
+        "ramMb": 171.67578125,
+        "replyMs": 0.13688000001366163,
+        "map": "mp/ffa3",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 16.361616834396376,
+        "ramMb": 171.67578125,
+        "replyMs": 0.13612000000762237,
+        "map": "mp/ffa3",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 19.99820879679858,
+        "ramMb": 171.67578125,
+        "replyMs": 0.1403200000140714,
+        "map": "mp/ffa3",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 20.90740987730941,
+        "ramMb": 171.67578125,
+        "replyMs": 0.14483999999015396,
+        "map": "mp/ffa3",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 18.179812204812627,
+        "ramMb": 171.67578125,
+        "replyMs": 0.24861999997938256,
+        "map": "mp/ffa3",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 19.997931759357574,
+        "ramMb": 171.67578125,
+        "replyMs": 0.15651999999022337,
+        "map": "mp/ffa3",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.9
+      },
+      {
+        "cpuPercent": 21.816321421456234,
+        "ramMb": 171.67578125,
+        "replyMs": 0.17108000000121137,
+        "map": "mp/ffa3",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 18.17989417056372,
+        "ramMb": 171.67578125,
+        "replyMs": 0.18277999998872474,
+        "map": "mp/ffa3",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 19.998253879732566,
+        "ramMb": 171.67578125,
+        "replyMs": 0.16675999998483348,
+        "map": "mp/ffa3",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 19.088972184962575,
+        "ramMb": 171.67578125,
+        "replyMs": 0.14683999998510444,
+        "map": "mp/ffa3",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 19.089188200592506,
+        "ramMb": 171.67578125,
+        "replyMs": 0.13477999999622625,
+        "map": "mp/ffa3",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 19.99819972570029,
+        "ramMb": 171.67578125,
+        "replyMs": 0.13033999999834123,
+        "map": "mp/ffa3",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 19.088916815368616,
+        "ramMb": 171.67578125,
+        "replyMs": 0.19199000001890454,
+        "map": "mp/ffa3",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 18.180015815050265,
+        "ramMb": 171.67578125,
+        "replyMs": 0.14097999999762578,
+        "map": "mp/ffa3",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 21.816325348059575,
+        "ramMb": 171.67578125,
+        "replyMs": 0.1318099999991773,
+        "map": "mp/ffa3",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 19.99817480294608,
+        "ramMb": 171.67578125,
+        "replyMs": 0.15730999999163942,
+        "map": "mp/ffa3",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 21.816257544934366,
+        "ramMb": 171.67578125,
+        "replyMs": 0.1733799999783514,
+        "map": "mp/ffa3",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 23.634356112669842,
+        "ramMb": 171.67578125,
+        "replyMs": 0.13344999999276297,
+        "map": "mp/ffa3",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 21.816073314528452,
+        "ramMb": 171.67578125,
+        "replyMs": 0.17205000000330983,
+        "map": "mp/ffa3",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 22.72527589859846,
+        "ramMb": 171.67578125,
+        "replyMs": 0.17356000000745553,
+        "map": "mp/ffa3",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 20.90711703015901,
+        "ramMb": 171.67578125,
+        "replyMs": 0.14522000000738444,
+        "map": "mp/ffa3",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.9
+      },
+      {
+        "cpuPercent": 24.54281320327467,
+        "ramMb": 171.67578125,
+        "replyMs": 0.14262999999914427,
+        "map": "mp/ffa3",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 20.900767178562056,
+        "ramMb": 171.67578125,
+        "replyMs": 0.2801400000009835,
+        "map": "mp/ffa3",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 19.089282423738165,
+        "ramMb": 171.67578125,
+        "replyMs": 0.1273400000059155,
+        "map": "mp/ffa3",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 20.907309720342678,
+        "ramMb": 171.67578125,
+        "replyMs": 0.1316299999984949,
+        "map": "mp/ffa3",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 21.816300955544012,
+        "ramMb": 171.67578125,
+        "replyMs": 0.1584599999944203,
+        "map": "mp/ffa3",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 19.99836460646385,
+        "ramMb": 171.67578125,
+        "replyMs": 0.16920000001618973,
+        "map": "mp/ffa3",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 19.998242427193897,
+        "ramMb": 171.67578125,
+        "replyMs": 0.13633000000368156,
+        "map": "mp/ffa3",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 20.90725555615893,
+        "ramMb": 171.67578125,
+        "replyMs": 0.13839999999731845,
+        "map": "mp/ffa3",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      }
+    ]
+  },
+  {
+    "summary": {
+      "stage": "32 bots back to duel1",
+      "seconds": 60,
+      "samples": 55,
+      "players": [
+        32
+      ],
+      "maps": [
+        "mp/duel1"
+      ],
+      "cpuAvg": 15.4,
+      "cpuMax": 19.0,
+      "ramMaxMiB": 174.2,
+      "replyP95Ms": 0.3,
+      "replyMaxMs": 1.1,
+      "timeouts": 0,
+      "stealAvg": 0.0
+    },
+    "samples": [
+      {
+        "cpuPercent": 0.0,
+        "ramMb": 174.18359375,
+        "replyMs": 0.1584299999990435,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": null
+      },
+      {
+        "cpuPercent": 9.998925615442424,
+        "ramMb": 174.18359375,
+        "replyMs": 0.15529000000924498,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 14.5440342015183,
+        "ramMb": 174.18359375,
+        "replyMs": 0.15079000002060639,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 15.452867202926829,
+        "ramMb": 174.18359375,
+        "replyMs": 0.2558799999974326,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 16.361845589385453,
+        "ramMb": 174.18359375,
+        "replyMs": 0.1539299999819832,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 15.452974519204004,
+        "ramMb": 174.18359375,
+        "replyMs": 0.15759999999431784,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 18.179382557723134,
+        "ramMb": 174.18359375,
+        "replyMs": 0.16053000001647888,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 16.36174473770439,
+        "ramMb": 174.18359375,
+        "replyMs": 0.14936000002307992,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 15.450513923855459,
+        "ramMb": 174.18359375,
+        "replyMs": 0.19363999999200132,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 13.634996740335842,
+        "ramMb": 174.18359375,
+        "replyMs": 0.148120000005747,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.9
+      },
+      {
+        "cpuPercent": 15.453129596666978,
+        "ramMb": 174.18359375,
+        "replyMs": 0.2084399999944253,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 15.452725629191931,
+        "ramMb": 174.18359375,
+        "replyMs": 0.15833999998449144,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 14.543899075448273,
+        "ramMb": 174.18359375,
+        "replyMs": 0.16175000001794615,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 15.452340349387457,
+        "ramMb": 174.18359375,
+        "replyMs": 0.2041099999985363,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 14.543721000019026,
+        "ramMb": 174.18359375,
+        "replyMs": 0.1802699999871038,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 16.36179975161419,
+        "ramMb": 174.18359375,
+        "replyMs": 0.1714800000058858,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 14.54383959750587,
+        "ramMb": 174.18359375,
+        "replyMs": 0.15636999998491774,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 16.361870873145673,
+        "ramMb": 174.18359375,
+        "replyMs": 0.17174999999269858,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 15.452953168203107,
+        "ramMb": 174.18359375,
+        "replyMs": 0.2260500000090815,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 13.635087094718548,
+        "ramMb": 174.18359375,
+        "replyMs": 0.2029500000162443,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 17.27095346730182,
+        "ramMb": 174.18359375,
+        "replyMs": 0.15296999998781757,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 15.453098707348088,
+        "ramMb": 174.18359375,
+        "replyMs": 0.14846999999917898,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 16.361949372283437,
+        "ramMb": 174.18359375,
+        "replyMs": 0.1853699999969649,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 15.452886868101691,
+        "ramMb": 174.18359375,
+        "replyMs": 0.18961000000672357,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 15.453070192079247,
+        "ramMb": 174.18359375,
+        "replyMs": 0.1521700000068904,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 19.020849474995618,
+        "ramMb": 174.18359375,
+        "replyMs": 0.12397999998370324,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 15.453412663203098,
+        "ramMb": 174.18359375,
+        "replyMs": 0.11325999997779945,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 15.453229190628193,
+        "ramMb": 174.18359375,
+        "replyMs": 1.1221299999988332,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 15.453345656788692,
+        "ramMb": 174.18359375,
+        "replyMs": 0.14364000000455235,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 16.362357496649523,
+        "ramMb": 174.18359375,
+        "replyMs": 0.13488999999822227,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 13.635295447318146,
+        "ramMb": 174.18359375,
+        "replyMs": 0.16264000001342538,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 14.544383629265816,
+        "ramMb": 174.18359375,
+        "replyMs": 0.17187999998213854,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 18.180416884867533,
+        "ramMb": 174.18359375,
+        "replyMs": 0.12415000000487453,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 16.362290282639243,
+        "ramMb": 174.18359375,
+        "replyMs": 0.12576100002092971,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.9
+      },
+      {
+        "cpuPercent": 15.453227785909036,
+        "ramMb": 174.18359375,
+        "replyMs": 0.12626000000182103,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 17.27127971967028,
+        "ramMb": 174.18359375,
+        "replyMs": 0.1350800000068375,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 13.635241654306432,
+        "ramMb": 174.18359375,
+        "replyMs": 0.12799000000995875,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 18.18048877489589,
+        "ramMb": 174.18359375,
+        "replyMs": 0.5027500000096552,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 15.453036620049884,
+        "ramMb": 174.18359375,
+        "replyMs": 0.24759000001495224,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 14.529268860692834,
+        "ramMb": 174.18359375,
+        "replyMs": 0.17553999998654035,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 14.544243089337614,
+        "ramMb": 174.18359375,
+        "replyMs": 0.14195999997923536,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 16.362284020861892,
+        "ramMb": 174.18359375,
+        "replyMs": 0.15116000000148233,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 14.544246130153757,
+        "ramMb": 174.18359375,
+        "replyMs": 0.13024000000427804,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 15.453299005496437,
+        "ramMb": 174.18359375,
+        "replyMs": 0.12885999998957232,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 17.27118395113124,
+        "ramMb": 174.18359375,
+        "replyMs": 0.14694099999701393,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 16.36232419448528,
+        "ramMb": 174.18359375,
+        "replyMs": 0.12907999999356434,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 16.36012408296097,
+        "ramMb": 174.18359375,
+        "replyMs": 0.1020199999857141,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 14.544249686588387,
+        "ramMb": 174.18359375,
+        "replyMs": 0.1296200000240333,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 17.27126904378101,
+        "ramMb": 174.18359375,
+        "replyMs": 0.13030000002345332,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 15.45329198183895,
+        "ramMb": 174.18359375,
+        "replyMs": 0.13255999999728374,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 18.18035823294182,
+        "ramMb": 174.18359375,
+        "replyMs": 0.14446099999076978,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 16.362342474217797,
+        "ramMb": 174.18359375,
+        "replyMs": 0.14500000000339242,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 17.2712112529069,
+        "ramMb": 174.18359375,
+        "replyMs": 0.1287499999875763,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 16.362286415507754,
+        "ramMb": 174.18359375,
+        "replyMs": 0.1277300000026571,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      },
+      {
+        "cpuPercent": 16.362198810598468,
+        "ramMb": 174.18359375,
+        "replyMs": 0.19664100000227336,
+        "map": "mp/duel1",
+        "players": 32,
+        "maxPlayers": "32",
+        "stealPercent": 0.0
+      }
+    ]
+  }
+]
