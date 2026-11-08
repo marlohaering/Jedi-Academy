@@ -32,5 +32,5 @@ primary_region = "fra"
   destination = "/data"
 
 [[vm]]
-  size = "shared-cpu-1x"   # ~4 players use <10% CPU
+  size = "performance-1x"  # sustained CPU for up to 32 players, without burst-credit throttling
   memory = "2gb"
