@@ -27,6 +27,7 @@ import time
 import zipfile
 
 from metrics import ProcessMetrics
+from bundles import select_manifest
 
 from aiohttp import WSMsgType, web
 
@@ -149,13 +150,52 @@ def pak_list(mobile):
     if os.path.isdir(DATA_DIR):
         for name in sorted(os.listdir(DATA_DIR)):
             low = name.lower()
-            if low.endswith('.pk3') and low.endswith('-mobile.pk3') == mobile:
+            if low.endswith('.pk3') and not low.startswith('jka-bundle-') and low.endswith('-mobile.pk3') == mobile:
                 st = os.stat(os.path.join(DATA_DIR, name))
                 out.append({'name': name, 'size': st.st_size, 'version': f'{st.st_size:x}-{int(st.st_mtime):x}'})
     return out
 
 
+def asset_paks():
+    """Core packages contain menus, arena metadata, levelshots and character portraits."""
+    try:
+        with open(os.path.join(DATA_DIR, 'map-paks', 'bundles.json')) as f:
+            catalog = json.load(f)
+        return [dict(catalog['packages'][n], name='map-paks/' + n)
+                for n in catalog['profiles']['desktop']['core']]
+    except (OSError, ValueError, KeyError):
+        return pak_list(False)
+
+
 async def manifest(request):
+    mapname = request.query.get('map')
+    if mapname is not None:
+        if mapname == 'current':
+            try:
+                mapname = (await query_info()).get('mapname', '')
+            except (OSError, ValueError, asyncio.TimeoutError):
+                return web.json_response({'error': 'Game server not responding; retry shortly'}, status=503)
+        mapname = mapname.lower()
+        if '..' in mapname or not re.fullmatch(r'[a-z0-9_/-]{1,64}', mapname):
+            raise web.HTTPBadRequest(text='Invalid map name')
+        try:
+            with open(os.path.join(DATA_DIR, 'map-paks', 'bundles.json')) as f:
+                catalog = json.load(f)
+            result = select_manifest(catalog, mapname)
+        except KeyError:
+            return web.json_response({'error': 'No package available for map ' + mapname}, status=404)
+        except FileNotFoundError:
+            # Compatibility while the first catalog is building, or on older deployments.
+            def legacy_has_map():
+                for pak in pak_list(False):
+                    with zipfile.ZipFile(os.path.join(DATA_DIR, pak['name'])) as z:
+                        if 'maps/' + mapname + '.bsp' in {n.lower() for n in z.namelist()}:
+                            return True
+                return False
+            if not await asyncio.get_running_loop().run_in_executor(None, legacy_has_map):
+                return web.json_response({'error': 'Map packages are being prepared; please retry'}, status=503)
+            result = {'map': mapname, 'bundles': False, 'paks': pak_list(False), 'mobile': pak_list(True)}
+        return web.json_response(result, headers={'Cache-Control': 'no-store'})
     return web.json_response({'paks': pak_list(False), 'mobile': pak_list(True)},
                              headers={'Cache-Control': 'no-cache'})
 
@@ -164,7 +204,7 @@ async def pak(request):
     name = request.match_info['name']
     if '/' in name or '..' in name or not name.lower().endswith('.pk3'):
         raise web.HTTPNotFound()
-    path = os.path.join(DATA_DIR, name)
+    path = os.path.join(DATA_DIR, 'map-paks', name) if name.startswith('jka-bundle-') else os.path.join(DATA_DIR, name)
     if not os.path.isfile(path):
         raise web.HTTPNotFound()
     return web.FileResponse(path, headers={'Cache-Control': 'private, max-age=31536000, immutable'})
@@ -205,7 +245,7 @@ def map_title(mapname):
     global _map_titles
     if _map_titles is None:
         _map_titles = {}
-        for p in pak_list(False):
+        for p in asset_paks():
             try:
                 with zipfile.ZipFile(os.path.join(DATA_DIR, p['name'])) as z:
                     for n in z.namelist():
@@ -224,7 +264,7 @@ def pk3_file(path):
     want = path.lower()
     if want not in _pk3_files:
         data = None
-        for p in pak_list(False):
+        for p in asset_paks():
             try:
                 with zipfile.ZipFile(os.path.join(DATA_DIR, p['name'])) as z:
                     for n in z.namelist():

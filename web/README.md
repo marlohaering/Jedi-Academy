@@ -41,13 +41,13 @@ Browser                                  fly.io machine (jka-web-ffa, fra)
   its password check is the only way in. Without a valid cookie the page, the game data and the
   WebSocket all return 401.
 * **Client and server use the same OpenJK version** (commit `260c59c`), so the game logic matches.
-* **Player download:** `server/repack.py` builds one slim `jka-mp.pk3` (≈510 MB instead of 1.2 GB) for the
-  browsers at container start. It contains the maps in `CLIENT_MAPS` (`server/start.sh`: ffa1–5 and
-  duel1–10) and leaves out cinematics, non-English dialogue, all other maps with their textures and
-  props, and the music of other levels. The browser keeps it in Cache Storage, so it is only downloaded
-  once. The server itself uses the original pk3s (`sv_pure 0`).
-* **Phones** get `jka-mp-mobile.pk3` (≈180 MB: only what those maps need, images ≤ 256 px), built in the
-  background at container start (`repack.py … profile=mobile`). Phones run at a smaller resolution and
+* **Player download:** `server/bundles.py` splits all installed maps into content-addressed core,
+  shared and map packages. The browser initially loads only the current map's requirements,
+  retains visited packages in Cache Storage and downloads missing packages during map changes.
+  The engine waits before map initialization, keeps its network loop alive, restarts its filesystem
+  and requests a fresh gamestate afterwards. No page reload is needed. See [on-demand maps](server/README.md#on-demand-map-packages).
+* **Phones** get separate mobile packages (images ≤ 256 px), built in the
+  background at container start. Phones run at a smaller resolution and
   30 fps. `?mobile` / `?desktop` force the mode. They get touch controls (`shell-mp/touch.js`: move stick,
   look drag, buttons, radials) and join the game automatically. A gamepad works on phone and desktop.
   See [`MOBILE.md`](MOBILE.md).
@@ -121,9 +121,8 @@ fly logs                                      # server log: connects, team chang
 * **DNS:** `jka.haering.me` points at the app's fly IPs via A and AAAA records in Cloudflare (DNS only,
   not proxied). The TLS certificate comes from fly (`fly certs show jka.haering.me`).
 * **Server settings** (map, time and frag limits, slots) are in `server/server.cfg`.
-* **Changing the map:** set it in `server.cfg`. Every map the server can switch to (rotation, vote, admin)
-  must be in `CLIENT_MAPS` in `server/start.sh`; the client pk3s are rebuilt when that list changes. Each
-  map's music folder is taken from its bsp.
+* **Changing the map:** set it in `server.cfg`. All BSP maps installed in the server data are included in the package catalog. New maps require
+  a package rebuild before clients can download them; their music is taken from the BSP metadata.
 
 ### Notes and limits
 
@@ -131,7 +130,7 @@ fly logs                                      # server log: connects, team chang
   password to people who own the game.
 * `g_antiFakePlayer 0`: all players arrive from 127.0.0.1, so the per-IP limit would block the fourth
   player.
-* First visit: the browser downloads ≈780 MB once. Later visits load from the browser cache.
+* First visit: core plus current-map packages only. Later maps reuse shared packages and the browser cache.
 * Performance, measured on a laptop with Intel iGPU in Chrome: 60 fps with ~6 ms engine time per frame.
   With software rendering (no GPU): ~29 fps. From Hamburg the game round trip to fra is ~22 ms.
 * Phones: touch controls, an HTML pause menu with chat, settings and a character picker, fullscreen and

@@ -27,6 +27,15 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "client.h"
 
 #include <limits.h>
+#ifdef __EMSCRIPTEN__
+#include <emscripten/emscripten.h>
+static int webMapTicket = 0;
+static int webMapResult = 0;
+static bool webMapWaiting = false;
+extern "C" EMSCRIPTEN_KEEPALIVE void web_map_ready(int ticket, int success) {
+    if (webMapWaiting && ticket == webMapTicket) webMapResult = success ? 1 : -1;
+}
+#endif
 #include "ghoul2/G2.h"
 #include "qcommon/cm_public.h"
 #include "qcommon/MiniHeap.h"
@@ -1346,6 +1355,10 @@ void CL_DownloadsComplete( void ) {
 		clc.downloadRestart = qfalse;
 
 		FS_Restart(clc.checksumFeed); // We possibly downloaded a pak, restart the file system to load it
+#ifdef __EMSCRIPTEN__
+        const char *info = cl.gameState.stringData + cl.gameState.stringOffsets[CS_SERVERINFO];
+        EM_ASM({ if (window.jkaMapIndexed) window.jkaMapIndexed(UTF8ToString($0)); }, Info_ValueForKey(info, "mapname"));
+#endif
 
 		// inform the server so we get new gamestate info
 		CL_AddReliableCommand( "donedl", qfalse );
@@ -1518,6 +1531,29 @@ and determine if we need to download them
 void CL_InitDownloads(void) {
   char missingfiles[1024];
 
+#ifdef __EMSCRIPTEN__
+    // Yield before cgame/collision loading; the normal network frame loop keeps running.
+    const char *webInfo = cl.gameState.stringData + cl.gameState.stringOffsets[CS_SERVERINFO];
+    const char *webMap = Info_ValueForKey(webInfo, "mapname");
+    const int ticket = ++webMapTicket;
+    webMapResult = 0;
+    webMapWaiting = true;
+    const int webStatus = EM_ASM_INT({
+        return window.jkaEnsureMap ? Number(window.jkaEnsureMap(UTF8ToString($0), $1)) : 1;
+    }, webMap, ticket);
+    if (!webStatus) {
+        cls.state = CA_CONNECTED;
+        return;
+    }
+    webMapWaiting = false;
+    if (webStatus == 2) {
+        clc.downloadRestart = qtrue;
+        CL_DownloadsComplete();
+        return;
+    }
+#endif
+
+
 	if ( clc.downloadFinished ) {
 		// If we just finished a download with a "donedl" we are getting another gamestate and we would be asked to
 		// download skipped files again. To avoid this we just skip this one...
@@ -1525,6 +1561,7 @@ void CL_InitDownloads(void) {
 		CL_DownloadsComplete();
 		return;
 	}
+
 
 	if ( cl_downloadOverlay->integer ) {
 		clc.downloadMenuActive = qtrue;
@@ -2189,6 +2226,22 @@ void CL_Frame ( int msec ) {
 	if ( !com_cl_running->integer ) {
 		return;
 	}
+
+#ifdef __EMSCRIPTEN__
+    if (webMapWaiting && cls.state < CA_CONNECTED) {
+        webMapWaiting = false;
+        EM_ASM({ if (window.jkaMapCancelled) window.jkaMapCancelled($0); }, webMapTicket);
+        ++webMapTicket; // A download finishing after disconnect must not revive the connection.
+    }
+    if (webMapWaiting && webMapResult && cls.state == CA_CONNECTED) {
+        const int result = webMapResult;
+        webMapWaiting = false;
+        webMapResult = 0;
+        if (result < 0) Com_Error(ERR_DROP, "Map download failed; retry in the loading screen");
+        clc.downloadRestart = qtrue;
+        CL_DownloadsComplete(); // FS_Restart + donedl asks for a fresh, current gamestate.
+    }
+#endif
 
 	SE_CheckForLanguageUpdates();	// will take zero time to execute unless language changes, then will reload strings.
 									//	of course this still doesn't work for menus...

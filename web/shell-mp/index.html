@@ -125,9 +125,11 @@
     <p id="tip"></p>
   </div>
 </div>
+<button id="retry-map" hidden style="position:fixed;z-index:6;top:65%;left:50%;transform:translateX(-50%)">Retry map download</button>
 <pre id="log"></pre>
 <div id="server-load" data-level="warn" title="Dedicated server CPU: 100% = one core. RAM: resident MiB. Response: gateway to game server, not network ping.">Server · unknown</div>
 <div id="rotate">Turn your phone sideways to play.</div>
+<script src="map-assets.js"></script>
 <script>
 (function () {
   const statusEl = document.getElementById('status');
@@ -211,15 +213,15 @@
   const mb = n => (n / 1048576).toFixed(0) + ' MB';
 
   // Download a pk3 once and keep it in the browser's Cache Storage; later visits load from disk.
-  async function loadPak(pak, onBytes) {
+  async function loadPak(pak, onBytes, signal) {
     const url = new URL('base/' + pak.name + '?v=' + pak.version, location.href).href;
     let cache = null;
     try { cache = await caches.open(CACHE); } catch (e) { /* no Cache Storage (private mode) */ }
     if (cache) {
       const hit = await cache.match(url);
-      if (hit) { const buf = await hit.arrayBuffer(); onBytes(buf.byteLength); return new Uint8Array(buf); }
+      if (hit) { const buf = await hit.arrayBuffer(); if (buf.byteLength === pak.size) { onBytes(buf.byteLength); return new Uint8Array(buf); } await cache.delete(url); }
     }
-    const resp = await fetch(url);
+    const resp = await fetch(url, { signal });
     if (!resp.ok) throw new Error(pak.name + ': HTTP ' + resp.status);
     const out = new Uint8Array(pak.size);
     const reader = resp.body.getReader();
@@ -227,8 +229,10 @@
     for (;;) {
       const { done, value } = await reader.read();
       if (done) break;
+      if (off + value.length > out.length) throw new Error(pak.name + ': download too large');
       out.set(value, off); off += value.length; onBytes(value.length);
     }
+    if (off !== pak.size) throw new Error(pak.name + ': incomplete download');
     if (cache) {
       try {
         await cache.put(url, new Response(out, { headers: { 'Content-Type': 'application/octet-stream' } }));
@@ -310,9 +314,11 @@
     websocket: { url: (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws', subprotocol: 'binary' },
   };
 
-  (async () => {
-    const r = await fetch('base/manifest.json');
+  async function prepareInitial() {
+    document.getElementById('retry-map').hidden = true;
+    const r = await fetch('base/manifest.json?map=current', { cache: 'no-store' });
     if (r.status === 401) { location.href = '/login'; return; }
+    if (!r.ok) { const e = await r.json().catch(() => ({})); throw new Error(e.error || 'Server not ready'); }
     manifest = await r.json();
     log('mode: ' + (MOBILE ? 'mobile' : 'desktop'));
     if (MOBILE) {
@@ -331,7 +337,12 @@
     if (navigator.storage && navigator.storage.persist) navigator.storage.persist().then(ok => log('persistent storage: ' + ok)).catch(() => {});
     statusEl.textContent = 'Game data loaded.';
     maybeReady();
-  })().catch(e => { statusEl.textContent = 'Failed to load game data: ' + e.message; });
+  }
+  function initialError(e) {
+    statusEl.textContent = 'Failed to load game data: ' + e.message;
+    document.getElementById('retry-map').hidden = false;
+  }
+  prepareInitial().catch(initialError);
 
   // ---- loading screen ----
   const TIPS = [
@@ -411,6 +422,46 @@
     }, 200);
   }
 
+  const mapAssets = new MapAssets({
+    mobile: MOBILE,
+    manifest: async (map, signal) => {
+      const r = await fetch('base/manifest.json?map=' + encodeURIComponent(map), { cache: 'no-store', signal });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error || 'Map download failed');
+      return data;
+    },
+    load: loadPak,
+    mount: (name, bytes) => Module.FS.writeFile('/jka/base/' + name, bytes, { canOwn: true }),
+    unmount: name => Module.FS.unlink('/jka/base/' + name),
+    progress: (map, done, total) => {
+      overlay.classList.remove('hidden', 'fade'); overlay.classList.add('joining');
+      document.getElementById('bar').classList.remove('busy');
+      statusEl.textContent = 'Downloading ' + map + '… ' + mb(done) + ' / ' + mb(total);
+      setProgress(total ? done / total : 1);
+    },
+    ready: (ticket, success) => {
+      if (success) { joinScreen(); }
+      Module._web_map_ready(ticket, success ? 1 : 0);
+    },
+    error: (map, error) => {
+      overlay.classList.remove('hidden', 'fade');
+      statusEl.textContent = 'Could not download ' + map + ': ' + error.message;
+      document.getElementById('retry-map').hidden = false;
+    },
+  });
+  window.jkaEnsureMap = (map, ticket) => {
+    const status = mapAssets.request(map, ticket);
+    if (status === 2) joinScreen();
+    return status;
+  };
+  window.jkaMapIndexed = map => mapAssets.indexed(map);
+  window.jkaMapCancelled = ticket => mapAssets.cancel(ticket);
+  document.getElementById('retry-map').addEventListener('click', () => {
+    document.getElementById('retry-map').hidden = true;
+    if (!start.done) prepareInitial().catch(initialError);
+    else Module.ccall('web_cmd', null, ['string'], ['reconnect']);
+  });
+
   function start() {
     if (!engineReady || !paks || start.done) return;
     start.done = true;
@@ -422,6 +473,7 @@
     // canOwn: MEMFS keeps the downloaded buffer instead of copying it (the pk3 would be in memory twice)
     manifest.paks.forEach((p, i) => { FS.writeFile('/jka/base/' + p.name, paks[i], { canOwn: true }); paks[i] = null; });
     paks = [];
+    mapAssets.seed(manifest.map, manifest.paks);
     joinScreen();
     let video = ['+set', 'r_mode', '-2', '+set', 'com_hunkmegs', '256'];
     if (MOBILE) {

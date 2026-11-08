@@ -131,19 +131,32 @@ def needed_ambience(read, names, bsps):
     return {os.path.splitext(s)[0] for s in out}
 
 
-def needed_stems(read, names, maps):
-    """stems under textures/ and models/map_objects/ the client needs on these maps"""
+def dependency_index(read, names):
+    """Parse global references once; cache model dependencies across map selections."""
     shaders = {}
     global_refs = set()
     for n in names:
         if n.endswith('.shader'):
             parsed = parse_shaders(read(n).decode('latin-1'))
-            shaders.update(parsed)
+            for shader, images in parsed.items():
+                shaders.setdefault(shader, set()).update(images)
             for s, imgs in parsed.items():
                 if not s.startswith(FILTERED):  # effects, HUD, players: used by name from anywhere
                     global_refs |= imgs
         elif n.endswith(('.efx', '.skin', '.menu', '.sab', '.npc', '.veh', '.wpn')):
             global_refs |= {stem(m.decode('latin-1')) for m in PATH_RE.findall(read(n))}
+    skins = {}
+    for n in names:
+        if n.endswith('.skin'):
+            parts = n.split('/')
+            for i in range(1, len(parts)):
+                skins.setdefault('/'.join(parts[:i]) + '/', []).append(n)
+    return shaders, global_refs, skins, {}
+
+
+def needed_stems(read, names, maps, index=None):
+    """Stems required by maps and globally loaded models/effects."""
+    shaders, global_refs, skins, model_cache = index or dependency_index(read, names)
     refs = {stem(m.decode('latin-1')) for mp in maps for m in PATH_RE.findall(read('maps/' + mp + '.bsp'))}
     refs |= global_refs
     refs |= {stem(n) for n in names if n.startswith(CODE_MODELS)}
@@ -154,24 +167,24 @@ def needed_stems(read, names, maps):
             continue
         out.add(s)
         todo += shaders.get(s, ())
-        if s.startswith('models/'):  # model: its own shader references, and its skins
-            for ext in ('.md3', '.glm'):
-                if s + ext in names:
-                    data = read(s + ext)
-                    todo += [stem(m.decode('latin-1')) for m in PATH_RE.findall(data)]
-                    # Ghoul2 mesh headers store animName without the .gla extension.
-                    # A path scan alone sees the stem but drops the actual animation.
-                    # mdxmHeader_t: ident/version (8), name (64), animName (64).
-                    if ext == '.glm' and data[:4] == b'2LGM' and len(data) >= 136:
-                        anim = data[72:136].split(b'\0', 1)[0].decode('latin-1')
-                        if anim:
-                            anim = anim.lower().replace('\\', '/')
-                            todo.append(anim if anim.endswith('.gla') else anim + '.gla')
-            d = os.path.dirname(s) + '/'
-            todo += [stem(n) for n in names if n.startswith(d) and n.endswith('.skin')]
-            for n in names:
-                if n.startswith(d) and n.endswith('.skin'):
-                    todo += [stem(m.decode('latin-1')) for m in PATH_RE.findall(read(n))]
+        if s.startswith('models/'):
+            if s not in model_cache:
+                deps = set()
+                for ext in ('.md3', '.glm'):
+                    if s + ext in names:
+                        data = read(s + ext)
+                        deps.update(stem(m.decode('latin-1')) for m in PATH_RE.findall(data))
+                        # mdxmHeader_t stores animName without .gla at byte 72.
+                        if ext == '.glm' and data[:4] == b'2LGM' and len(data) >= 136:
+                            anim = data[72:136].split(b'\0', 1)[0].decode('latin-1')
+                            if anim:
+                                anim = anim.lower().replace('\\', '/')
+                                deps.add(anim if anim.endswith('.gla') else anim + '.gla')
+                for n in skins.get(os.path.dirname(s) + '/', ()):
+                    deps.add(stem(n))
+                    deps.update(stem(m.decode('latin-1')) for m in PATH_RE.findall(read(n)))
+                model_cache[s] = deps
+            todo += model_cache[s]
     return out
 
 

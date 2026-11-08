@@ -21,7 +21,7 @@ FROM docker.io/library/ubuntu:24.04
 RUN apt-get -q update && DEBIAN_FRONTEND=noninteractive apt-get -q install -y --no-install-recommends \
       python3 python3-aiohttp python3-pil zlib1g libstdc++6 tini && rm -rf /var/lib/apt/lists/*
 COPY --from=builder /opt/JediAcademy /opt/openjk
-COPY server/gateway.py server/metrics.py server/repack.py server/start.sh /opt/gateway/
+COPY server/gateway.py server/metrics.py server/bundles.py server/repack.py server/start.sh /opt/gateway/
 COPY server/server.cfg server/fill-bots.cfg server/clear-bots.cfg /opt/openjk/base/
 # JPLua scripts of the JA++ mod (welcome message, /ammotd)
 COPY server/japp/ /opt/openjk/japlus/

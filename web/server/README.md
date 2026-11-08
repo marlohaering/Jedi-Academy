@@ -105,3 +105,40 @@ the repair without a restart or full download. The normal authenticated manifest
 includes these automatically on page reload. They can be removed once both full
 client packages have been rebuilt with the corrected repacker. Game data stays on
 the private server volume; do not commit these packages.
+
+
+## On-demand map packages
+
+`bundles.py <base> <output> [mod]` builds desktop/mobile packages for every installed BSP.
+Live output is `/data/web/map-paks/`, with an atomically published `bundles.json` catalog.
+Files needed by the same set of maps share one package, so they are not duplicated across maps.
+Core includes weapons, player/NPC/vehicle assets, effects and menus; map groups include BSPs,
+map textures/props, music and mobile ambience. Existing mobile image/audio reductions remain.
+Animation dependencies are retained. This supplies map assets; it does not guarantee that SP
+levels have appropriate multiplayer spawn points or game logic.
+
+Authenticated `GET /base/manifest.json?map=current` or `?map=mp/ctf1` selects only that map's
+requirements in `paks` (desktop) and `mobile`. A missing catalog falls back to compatible legacy
+packages; unavailable maps produce a retryable response instead of launching a missing BSP.
+Without the map query, the legacy manifest never enumerates the new bundle directory.
+
+The shell verifies response lengths before caching and keeps versioned packages in Cache Storage.
+Only core and the selected map stay mounted in MEMFS; older visited maps remain in the browser
+cache. `CL_InitDownloads` yields to JavaScript before loading cgame/collision data. The connection
+keeps running during downloads, then `FS_Restart` and `donedl` refresh the game state. Ticket checks,
+cancellation and native indexing acknowledgements prevent stale downloads from resuming the wrong
+map or bypassing filesystem indexing after disconnect. Failures expose a retry button, without
+reloading the page or deliberately ending the connection. The game's own map-change/admin policy
+still applies to sessions.
+
+Startup builds only the new package catalog; legacy packages are a read-only migration fallback. A script/input fingerprint avoids rebuilding
+unchanged packages; builds use a lock, deterministic ZIP metadata, content hashes and atomic catalog
+publication. Unreferenced package versions older than 24 hours are collected at the next build;
+active catalog packages are retained. Keep disk headroom for the largest temporary package during
+rebuilds. Interrupted builds keep the previous catalog usable.
+
+Verification: `python3 -m unittest discover -s web/server -p 'test_*.py'` and
+`node --test web/shell-mp/test-map-assets.cjs`. Real headless Chrome tests cover initial entry,
+`duel1 → ctf1 → duel1`, cached return without pk3 requests, HTTP failure/retry, a 35-second download
+with server timeout 30 seconds, and a second map change during download. Browser checks must use
+Playwright polling by timer (`polling: 100`), not rAF, because the shell owns the engine's rAF loop.
