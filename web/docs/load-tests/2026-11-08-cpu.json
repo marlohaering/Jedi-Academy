@@ -1,0 +1,212 @@
+[
+  {
+    "cpuPercent": 0.0,
+    "ramMb": 174.13671875,
+    "stealPercent": 0,
+    "replyMs": 0.1,
+    "players": 32
+  },
+  {
+    "cpuPercent": 9.164925697381364,
+    "ramMb": 174.13671875,
+    "stealPercent": 0.0,
+    "replyMs": 0.1,
+    "players": 32
+  },
+  {
+    "cpuPercent": 12.497692176162841,
+    "ramMb": 174.13671875,
+    "stealPercent": 0.8,
+    "replyMs": 0.2,
+    "players": 32
+  },
+  {
+    "cpuPercent": 13.33144979944813,
+    "ramMb": 174.13671875,
+    "stealPercent": 0.0,
+    "replyMs": 0.1,
+    "players": 32
+  },
+  {
+    "cpuPercent": 17.4982728913024,
+    "ramMb": 174.13671875,
+    "stealPercent": 0.0,
+    "replyMs": 0.1,
+    "players": 32
+  },
+  {
+    "cpuPercent": 15.832441795341971,
+    "ramMb": 174.13671875,
+    "stealPercent": 0.0,
+    "replyMs": 0.1,
+    "players": 32
+  },
+  {
+    "cpuPercent": 18.330262831006824,
+    "ramMb": 174.13671875,
+    "stealPercent": 0.0,
+    "replyMs": 0.1,
+    "players": 32
+  },
+  {
+    "cpuPercent": 17.499709636067475,
+    "ramMb": 174.13671875,
+    "stealPercent": 0.0,
+    "replyMs": 0.1,
+    "players": 32
+  },
+  {
+    "cpuPercent": 18.331398729168658,
+    "ramMb": 174.13671875,
+    "stealPercent": 0.0,
+    "replyMs": 0.1,
+    "players": 32
+  },
+  {
+    "cpuPercent": 15.830590380130412,
+    "ramMb": 174.13671875,
+    "stealPercent": 0.0,
+    "replyMs": 0.1,
+    "players": 32
+  },
+  {
+    "cpuPercent": 14.999369376513167,
+    "ramMb": 174.13671875,
+    "stealPercent": 0.0,
+    "replyMs": 0.1,
+    "players": 32
+  },
+  {
+    "cpuPercent": 13.330425834154632,
+    "ramMb": 174.13671875,
+    "stealPercent": 0.0,
+    "replyMs": 0.2,
+    "players": 32
+  },
+  {
+    "cpuPercent": 15.000065600286778,
+    "ramMb": 174.13671875,
+    "stealPercent": 0.0,
+    "replyMs": 0.1,
+    "players": 32
+  },
+  {
+    "cpuPercent": 14.62828388425013,
+    "ramMb": 174.13671875,
+    "stealPercent": 4.1,
+    "replyMs": 1.1,
+    "players": 32
+  },
+  {
+    "cpuPercent": 5.885159002298029,
+    "ramMb": 174.13671875,
+    "stealPercent": 93.4,
+    "replyMs": 160.4,
+    "players": 32
+  },
+  {
+    "cpuPercent": 6.238623186104368,
+    "ramMb": 174.13671875,
+    "stealPercent": 93.8,
+    "replyMs": 402.9,
+    "players": 32
+  },
+  {
+    "cpuPercent": 5.006218718634688,
+    "ramMb": 174.13671875,
+    "stealPercent": 93.8,
+    "replyMs": 1.8,
+    "players": 32
+  },
+  {
+    "cpuPercent": 6.249744001371377,
+    "ramMb": 174.13671875,
+    "stealPercent": 93.3,
+    "replyMs": 721.8,
+    "players": 32
+  },
+  {
+    "cpuPercent": 4.469226711771263,
+    "ramMb": 174.13671875,
+    "stealPercent": 92.1,
+    "replyMs": 640.5,
+    "players": 32
+  },
+  {
+    "cpuPercent": 5.821691783598903,
+    "ramMb": 174.13671875,
+    "stealPercent": 94.2,
+    "replyMs": 642.3,
+    "players": 32
+  },
+  {
+    "cpuPercent": 10.901921137477187,
+    "ramMb": 174.13671875,
+    "stealPercent": 87.7,
+    "replyMs": 84.4,
+    "players": 32
+  },
+  {
+    "cpuPercent": 5.5766065715230875,
+    "ramMb": 174.13671875,
+    "stealPercent": 91.8,
+    "replyMs": 318.9,
+    "players": 32
+  },
+  {
+    "cpuPercent": 5.836919137595505,
+    "ramMb": 174.13671875,
+    "stealPercent": 94.1,
+    "replyMs": 318.0,
+    "players": 32
+  },
+  {
+    "cpuPercent": 6.240402795392269,
+    "ramMb": 174.13671875,
+    "stealPercent": 92.9,
+    "replyMs": 161.7,
+    "players": 32
+  },
+  {
+    "cpuPercent": 5.353632475548651,
+    "ramMb": 174.13671875,
+    "stealPercent": 92.9,
+    "replyMs": 82.4,
+    "players": 32
+  },
+  {
+    "cpuPercent": 6.619638070729469,
+    "ramMb": 174.13671875,
+    "stealPercent": 93.4,
+    "replyMs": 241.9,
+    "players": 32
+  },
+  {
+    "cpuPercent": 5.616930142422129,
+    "ramMb": 174.13671875,
+    "stealPercent": 93.8,
+    "replyMs": 644.1,
+    "players": 32
+  },
+  {
+    "cpuPercent": 5.98882008373409,
+    "ramMb": 174.13671875,
+    "stealPercent": 93.5,
+    "replyMs": 1280.8,
+    "players": 32
+  },
+  {
+    "cpuPercent": 6.8687431631146465,
+    "ramMb": 174.13671875,
+    "stealPercent": 91.9,
+    "replyMs": 1522.4,
+    "players": 32
+  },
+  {
+    "cpuPercent": 0.0,
+    "ramMb": 174.13671875,
+    "stealPercent": 0,
+    "replyMs": 0.1,
+    "players": 32
+  }
+]

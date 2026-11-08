@@ -21,3 +21,5 @@ Missing process data, process restart, UDP timeout, stale network data and touch
 
 ## Verification record
 Process fixture test passed after failing for missing sampler. Live procfs sampling passed. Six Node VM checks passed (healthy, warning, overloaded, no reply, stale, fetch failure). Python compilation, JavaScript syntax, shell syntax and git diff whitespace checks passed. Full gateway integration was not run: local aiohttp is unavailable; no packages installed. No deployment performed.
+
+Follow-up: gateway integration verified in the existing container (auth, live UDP/process sampling, timeout and cleanup), deployment verified live. Code review: no important findings. See ../../load-tests/2026-11-08-report.md for the 32-bot load test and its limits.
