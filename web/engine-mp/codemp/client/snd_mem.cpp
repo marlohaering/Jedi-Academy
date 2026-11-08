@@ -714,6 +714,14 @@ static qboolean S_LoadSound_FileLoadAndNameAdjuster(char *psFilename, byte **pDa
 #define SOUND_CHARS_DIR_LENGTH 12 // strlen( SOUND_CHARS_DIR )
 static qboolean S_LoadSound_DirIsAllowedToKeepMP3s(const char *psFilename)
 {
+#ifdef __EMSCRIPTEN__
+    // NPC/player misc effects can become random-access loops (e.g. Tauntaun buck2).
+    // Decode them up front rather than keeping an MP3 stream the loop mixer cannot use.
+    // Dialogue outside misc retains streaming to keep its memory usage bounded.
+    if (Q_stristr(psFilename, "/misc/"))
+        return qfalse;
+#endif
+
 	if ( Q_stricmpn( psFilename, SOUND_CHARS_DIR, SOUND_CHARS_DIR_LENGTH ) == 0 )
 		return qtrue;	// found a dir that's allowed to keep MP3s
 

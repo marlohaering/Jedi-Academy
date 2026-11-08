@@ -72,3 +72,22 @@ node web/tests/map-download-reliable.cjs
 The fixture expects the documented localhost gateway on 8282, local-only-test credentials,
 readable map packages at /data/web/map-paks, and engine home /tmp/home. No game assets are in git.
 The run also logs unrelated missing Hoth texture/music warnings; those are outside this fix.
+
+## Tauntaun MP3 loop recovery
+
+`S_AddLoopSounds()` rejects streamed MP3s because its mixer needs random sample access.
+The old loader allowed all sound/chars MP3s to stay streamed, including short misc effects
+such as sound/chars/tauntaun/misc/buck2. The browser now decodes /misc/ effects to PCM
+at load time, using the existing decoder/resampler. Dialogue outside misc keeps streaming;
+native behavior is unchanged. This avoids freeing/replacing sound data while channels use it.
+
+The test compiles the actual loader policy and checks the reported path, case-insensitive
+paths, other misc effects, dialogue and ambient sounds in browser/native configurations:
+`python3 -m unittest discover -s web/tests -p 'test_*.py'`.
+It failed on the old policy and passes with the fix.
+
+A separate private browser fixture adds prestarted broadcast target_speaker entities for
+buck2 at the player origins of a copy of mp/duel1. The original engine reproduces the exact
+streamed-MP3 loop drop; the fixed engine mixes the same loops and remains active. The private
+modified BSP/package is not in git. The pinned engine build, five server tests and five
+map-loader tests pass; no signature mismatch or missing-function warnings were found.
