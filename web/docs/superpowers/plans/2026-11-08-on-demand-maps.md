@@ -19,3 +19,5 @@ Verification ledger:
 - Real headless Chrome passed duel1→ctf1→duel1, cache-only return, HTTP failure/retry, 35-second download with sv_timeout=30, and map changes during download.
 - Independent review findings fixed: native filesystem-indexing acknowledgement, deterministic ZIP directories, and retirement of duplicate legacy builds with catalog-safe orphan cleanup.
 - Production migration: stage MP catalog first within the 3 GiB volume, deploy with auto-stop temporarily disabled, retire legacy files, publish remaining installed maps, restore auto-stop. Preserve all production JA++ override archives; game data never enters git.
+
+Completion: all 57 production-map packages published and SHA-256 verified, including JA++ overrides. Auto-stop restored after approved restart. A real HTTPS browser loaded the current map and entered the live game. See ../../on-demand-map-verification.md.

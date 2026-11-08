@@ -23,9 +23,9 @@ Original server assets were retained; only superseded client aggregates were ret
   and legacy disk duplication; each was corrected and verified.
 - Live HTTPS/gateway checks verified the map manifest, ranged authenticated package download,
   character portraits, source fingerprint and catalog publication.
-- An additional live browser attempt did not reach active play within 180 seconds. The live server
-  concurrently reported 32/32 occupied slots, one human and mp/ctf1. Existing players were not kicked
-  to force this optional check. Local end-to-end tests passed as above.
+- The first additional live browser attempt did not reach active play while the occupied live
+  server reported 32/32 slots. After the user explicitly approved the final restart, a fresh
+  HTTPS browser loaded the current-map packages and entered the live game successfully.
 
 ## Data size (compressed, decimal MB)
 
@@ -44,6 +44,6 @@ package is about 343 MiB. Future substantial asset additions may require more vo
 No server size, player limit, force regeneration, human clients or current game state was changed
 as part of the final checks.
 
-Auto-stop was temporarily disabled for file transfer. Restoring it is pending user confirmation
-because it requires restarting the occupied live machine. The repository fly.toml continues to
-specify auto-stop=stop and performance-1x / 2 GB.
+Auto-stop was temporarily disabled for file transfer and restored after the user approved the
+final restart. Live configuration confirms auto-stop enabled, performance CPU, one vCPU and
+2048 MiB RAM. The repository fly.toml continues to specify auto-stop=stop and performance-1x / 2 GB.
