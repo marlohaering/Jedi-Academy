@@ -157,7 +157,16 @@ def needed_stems(read, names, maps):
         if s.startswith('models/'):  # model: its own shader references, and its skins
             for ext in ('.md3', '.glm'):
                 if s + ext in names:
-                    todo += [stem(m.decode('latin-1')) for m in PATH_RE.findall(read(s + ext))]
+                    data = read(s + ext)
+                    todo += [stem(m.decode('latin-1')) for m in PATH_RE.findall(data)]
+                    # Ghoul2 mesh headers store animName without the .gla extension.
+                    # A path scan alone sees the stem but drops the actual animation.
+                    # mdxmHeader_t: ident/version (8), name (64), animName (64).
+                    if ext == '.glm' and data[:4] == b'2LGM' and len(data) >= 136:
+                        anim = data[72:136].split(b'\0', 1)[0].decode('latin-1')
+                        if anim:
+                            anim = anim.lower().replace('\\', '/')
+                            todo.append(anim if anim.endswith('.gla') else anim + '.gla')
             d = os.path.dirname(s) + '/'
             todo += [stem(n) for n in names if n.startswith(d) and n.endswith('.skin')]
             for n in names:

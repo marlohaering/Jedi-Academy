@@ -93,3 +93,15 @@ may override the image copy; update/remove that copy if necessary.
 
 The live server keeps a mirrored copy of `fill-bots.cfg` on the volume at `/data/base/fill-bots.cfg`
 to allow updates without a restart. Keep this copy in sync when changing the packaged config.
+
+### E-Web animation dependency
+
+Ghoul2 `.glm` headers reference a `.gla` animation without its extension. The repacker
+keeps this dependency explicitly, including `models/map_objects/hoth/model.gla` for
+the E-Web. A missing animation makes that model fail to load even when the mesh exists.
+The live volume also contains small `jka-animation-fix.pk3` and
+`jka-animation-fix-mobile.pk3` patches for existing cached client packages, allowing
+the repair without a restart or full download. The normal authenticated manifest
+includes these automatically on page reload. They can be removed once both full
+client packages have been rebuilt with the corrected repacker. Game data stays on
+the private server volume; do not commit these packages.
