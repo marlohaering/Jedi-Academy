@@ -157,3 +157,18 @@ Emscripten.
 ```sh
 ./build.sh && python3 -m http.server -d dist 8000   # http://localhost:8000/?map=academy
 ```
+
+## Multiplayer shell and archive tests
+
+The [domain glossary](../GLOSSARY.md) defines input ownership, engine home and client archive.
+
+From the repository root, run `node --test web/tests/*.test.cjs` (Node.js 18+).
+These tests exercise input ownership and the touch/gamepad adapters without game data or a wasm build.
+`input-state.js` owns held commands and analog movement across input sources; the most recently engaged stick
+owns movement until it returns to neutral. `touch.js` owns mappings, gestures and input lifecycle.
+
+Run `python3 -m unittest discover -s web/tests -p 'test_*.py'` for client archive tests.
+They build tiny synthetic archives, including quoted map-model references and explicit player directories.
+`repack.py` owns archive freshness: options, ordered input archive identities (size and nanosecond
+modification/change times), and its own content hash form the build stamp. A complete desktop archive
+survives a failed rebuild; a stale mobile archive is removed so phones wait for current map data.

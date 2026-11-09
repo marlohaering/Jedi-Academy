@@ -41,6 +41,7 @@
   const weaponCmd = wp => 'weapon ' + (wp <= 3 ? 1 : wp - 2);
 
   const note = t => { console.warn(t); if (window.jkaLog) jkaLog('[touch] ' + t); };
+  let input = null, focused = true;
   let M = null, settings = { size: 1, opacity: 0.5, look: 2.5 };
   try { Object.assign(settings, JSON.parse(localStorage.getItem('jka-touch') || '{}')); } catch (e) {}
   let st = new Int32Array(13);
@@ -60,14 +61,19 @@
     return FORCE_ORDER.find(fp => has(st[WS.forceKnown], fp));
   }
   // press / release of the Force button (or gamepad Y)
-  let heldForce = null;
-  function forceDown() {
+  const heldForce = new Map();
+  function forceDown(source) {
+    if (heldForce.has(source)) return;
     const fp = forcePower();
-    if (fp == null) { cmd('+useforce'); heldForce = 'useforce'; return; }
+    if (fp == null) { input.hold(source, 'useforce', true); heldForce.set(source, 'useforce'); return; }
     const [, c, hold] = FORCE[fp];
-    if (hold) { cmd('+' + c); heldForce = c; } else cmd(c);
+    if (hold) { input.hold(source, c, true); heldForce.set(source, c); } else cmd(c);
   }
-  function forceUp() { if (heldForce) { cmd('-' + heldForce); heldForce = null; } }
+  function forceUp(source) {
+    const action = heldForce.get(source);
+    if (action) input.hold(source, action, false);
+    heldForce.delete(source);
+  }
 
   // ---------- DOM ----------
   const css = `
@@ -211,7 +217,7 @@
       const r = STICK_R(), len = Math.hypot(vx, vy);
       if (len > r) { vx *= r / len; vy *= r / len; }
       knob.style.left = (p.ox + vx) + 'px'; knob.style.top = (p.oy + vy) + 'px';
-      M._web_move(vx / r, -vy / r);
+      input.move(p, vx / r, -vy / r);
     } else if (p.kind === 'look' || (p.kind === 'btn' && p.btn !== 'weapon' && p.btn !== 'forcesel')) {
       look(dx, dy);
     } else if (p.kind === 'btn' && p.btn === 'weapon' && Math.hypot(p.x - p.ox, p.y - p.oy) > 12) {
@@ -223,7 +229,7 @@
     if (!p) return;
     ptrs.delete(e.pointerId);
     if (p.kind === 'stick') {
-      M._web_move(0, 0);
+      input.release(p);
       base.style.display = knob.style.display = 'none';
     } else if (p.kind === 'btn') {
       p.el.classList.remove('down');
@@ -233,11 +239,11 @@
 
   function press(p) {
     const b = p.btn;
-    if (HOLD[b]) cmd('+' + HOLD[b]);
-    else if (b === 'force') forceDown();
+    if (HOLD[b]) input.hold(p, HOLD[b], true);
+    else if (b === 'force') forceDown(p);
     else if (b === 'jet') {
       // first press only fetches the jetpack (/jetpack toggles it, so never send it while we have one)
-      if (has(readState()[WS.holdables], HI_JETPACK)) { cmd('+use'); p.using = true; } else cmd('jetpack');
+      if (has(readState()[WS.holdables], HI_JETPACK)) { input.hold(p, 'use', true); p.using = true; } else cmd('jetpack');
     }
     else if (b === 'menu') touchMode ? openMenu() : key(K_ESCAPE);
     else if (b === 'forcesel') openForceRadial(p);
@@ -246,9 +252,9 @@
   function release(p) {
     const b = p.btn;
     if (b === 'full') fullscreen();   // on release: a touch's pointerup carries the user activation
-    else if (HOLD[b]) cmd('-' + HOLD[b]);
-    else if (b === 'force') forceUp();
-    else if (b === 'jet' && p.using) cmd('-use');
+    else if (HOLD[b]) input.release(p);
+    else if (b === 'force') forceUp(p);
+    else if (b === 'jet' && p.using) input.release(p);
     else if (b === 'weapon' && p.timer) { clearTimeout(p.timer); cmd('weapnext'); }
   }
 
@@ -320,29 +326,52 @@
 
   // ---------- gamepad (standard mapping) ----------
   const PAD_HOLD = { 0: 'moveup', 1: 'movedown', 2: 'use', 6: 'altattack', 7: 'attack', 8: 'scores' };
-  let padPrev = [], padLast = 0;
+  const padSource = {};
+  let padPrev = [], padLast = 0, padId = null, padStartDown = false;
+  function releasePad() {
+    input.release(padSource); forceUp(padSource);
+    padPrev = []; padLast = 0;
+  }
   function pollPad(now) {
     const pads = navigator.getGamepads ? navigator.getGamepads() : [];
     const pad = [...pads].find(g => g && g.connected);
-    if (!pad) return;
+    if (!pad) {
+      releasePad(); padId = null; padStartDown = false; padActive = false; return;
+    }
+    const id = pad.index + ':' + pad.id;
+    if (padId !== id) { releasePad(); padStartDown = false; padActive = false; }
+    padId = id;
+    // Start must still work while a menu catches gameplay input. Keep its edge
+    // state separate from the gameplay holds that menu entry releases.
+    const startDown = !!pad.buttons[9]?.pressed, startPressed = startDown && !padStartDown;
+    padStartDown = startDown;
+    if (!focused || document.hidden) { releasePad(); return; }
+    if (startPressed) {
+      padActive = true; root.classList.remove('on');
+      if (touchMode) menu.classList.contains('on') ? closeMenu() : openMenu();
+      else { releaseAll(); key(K_ESCAPE); }
+      return;
+    }
+    if (menu.classList.contains('on') || st[WS.state] !== CA_ACTIVE || !st[WS.valid] || st[WS.catcher]) {
+      releasePad(); return;
+    }
     const dt = Math.min(0.1, (now - (padLast || now)) / 1000); padLast = now;
     const dz = v => Math.abs(v) < 0.15 ? 0 : (v - Math.sign(v) * 0.15) / 0.85;
     const lx = dz(pad.axes[0] || 0), ly = dz(pad.axes[1] || 0);
-    M._web_move(lx, -ly);
+    input.move(padSource, lx, -ly);
     const rx = dz(pad.axes[2] || 0), ry = dz(pad.axes[3] || 0);
     if (rx || ry) look(rx * Math.abs(rx) * 700 * dt, ry * Math.abs(ry) * 500 * dt);
     pad.buttons.forEach((b, i) => {
       const down = b.pressed, was = padPrev[i];
       if (down === !!was) return;
       padPrev[i] = down;
-      if (PAD_HOLD[i]) cmd((down ? '+' : '-') + PAD_HOLD[i]);
-      else if (i === 3) down ? forceDown() : forceUp();
+      if (PAD_HOLD[i]) input.hold(padSource, PAD_HOLD[i], down);
+      else if (i === 3) down ? forceDown(padSource) : forceUp(padSource);
       else if (!down) return;
       else if (i === 4 || i === 14 || i === 15) cycleForce(i === 14 ? -1 : 1);
       else if (i === 5) cmd('weapnext');
       else if (i === 13) cmd('weapprev');
       else if (i === 12) cmd('saberAttackCycle');
-      else if (i === 9) touchMode ? (menu.classList.contains('on') ? closeMenu() : openMenu()) : key(K_ESCAPE);
     });
     if (pad.buttons.some(b => b.pressed)) root.classList.remove('on'), padActive = true;
   }
@@ -476,11 +505,19 @@
     menu.classList.add('on');
   }
   function closeMenu() { menu.classList.remove('on'); document.activeElement && document.activeElement.blur(); }
-  // stop moving and release held buttons (menu opens, overlay hides)
+  function releaseTouch() {
+    for (const [id, p] of [...ptrs]) {
+      // Cancellation must not trigger a tap action such as weapnext or fullscreen.
+      if (p.timer) { clearTimeout(p.timer); p.timer = null; }
+      if (p.btn === 'full') p.btn = null;
+      onUp({ pointerId: id });
+    }
+  }
+  // stop every input source when the menu opens or the page loses focus
   function releaseAll() {
-    for (const id of [...ptrs.keys()]) onUp({ pointerId: id });
-    M._web_move(0, 0);
-    forceUp();
+    releaseTouch();
+    releasePad();
+    for (const source of heldForce.keys()) forceUp(source);
   }
 
   // ---------- show / hide, auto-join ----------
@@ -516,7 +553,7 @@
     const blocked = st[WS.catcher] & (KEYCATCH_CONSOLE | KEYCATCH_UI | KEYCATCH_MESSAGE);
     const show = touchMode && active && !blocked && !padActive && !menu.classList.contains('on');
     root.classList.toggle('on', show);
-    if (!show && ptrs.size) releaseAll();
+    if (!show && ptrs.size) releaseTouch();
     if (show) updateChip();
   }
 
@@ -598,6 +635,10 @@
     // touch: show the touch overlay (phones); the gamepad works in both modes
     init(module, touch) {
       M = module; touchMode = touch;
+      input = window.createInputState(cmd, (x, y) => M._web_move(x, y));
+      addEventListener('blur', () => { focused = false; releaseAll(); });
+      addEventListener('focus', () => { focused = true; });
+      document.addEventListener('visibilitychange', () => { if (document.hidden) releaseAll(); });
       build();
       root.addEventListener('pointermove', forwardToRadial);
       root.addEventListener('pointerup', forwardToRadial);
@@ -606,7 +647,7 @@
       onFullscreenChange();
       if (touch) { initLifecycle(); blockPointerLock(module.canvas); }
     },
-    frame(now) { if (M && M._web_move) pollPad(now); },
+    frame(now) { if (M && M._web_move) { readState(); pollPad(now); } },
     // when the menu is open the overlay is hidden; P3 replaces the original menus
     settings,
   };

@@ -28,16 +28,22 @@ profile=mobile (phones, see web/MOBILE.md) additionally
   - nomusic=1 also drops all music
 Needs Pillow (python3-pil).
 
+Reuses an unchanged output via an adjacent .stamp (options, input archive identities,
+and script content hash). A stale phone archive is unavailable while rebuilding.
+
 usage: repack.py <base dir> <output.pk3> [map=mp/ffa3,mp/duel1,...] [music=music/<dir>,...] [mod=<mod dir>]
                  [profile=desktop|mobile] [nomusic=1]
 """
 import io
+import hashlib
+import json
 import os
 import re
 import sys
 import wave
 import zipfile
 from array import array
+from contextlib import ExitStack
 
 MOBILE_MAX = 256
 IMAGE_EXT = ('.jpg', '.tga', '.png')
@@ -237,89 +243,135 @@ def shrink_wav(data):
     return buf.getvalue()
 
 
+def pk3_paths(src, opts):
+    """The engine's archive order: sorted base archives, then sorted mod archives."""
+    def pk3s(d):
+        return [os.path.join(d, f) for f in sorted(os.listdir(d), key=str.lower)
+                if f.lower().endswith('.pk3') and not f.lower().startswith(CODE_PK3)]
+    return pk3s(src) + (pk3s(opts['mod']) if opts.get('mod') and os.path.isdir(opts['mod']) else [])
+
+
+def file_identity(path):
+    st = os.stat(path)
+    return [st.st_size, st.st_mtime_ns, st.st_ctime_ns]
+
+
+def ensure_current(src, out, opts):
+    """Build only when inputs change. Publish a stamp only after a complete archive.
+
+    Desktop keeps its last complete archive on failure. Stale mobile data is removed
+    before rebuilding, so phones wait rather than joining with an obsolete map set.
+    """
+    paks = pk3_paths(src, opts)
+    with open(__file__, 'rb') as script:
+        script_hash = hashlib.sha256(script.read()).hexdigest()
+    inputs = {'options': opts, 'script': script_hash,
+              'archives': [[os.path.abspath(p), file_identity(p)] for p in paks]}
+    stamp_path = out + '.stamp'
+    try:
+        with open(stamp_path) as f:
+            stamp = json.load(f)
+        if stamp == {'inputs': inputs, 'output': file_identity(out)}:
+            print(f'{out}: up to date')
+            return False
+    except (OSError, ValueError):
+        pass
+    if opts.get('profile') == 'mobile' and os.path.exists(out):
+        os.unlink(out)
+    try:
+        build(paks, out, opts)
+        with open(stamp_path + '.tmp', 'w') as f:
+            json.dump({'inputs': inputs, 'output': file_identity(out)}, f, sort_keys=True)
+        os.replace(stamp_path + '.tmp', stamp_path)
+    finally:
+        for tmp in (out + '.tmp', stamp_path + '.tmp'):
+            if os.path.exists(tmp):
+                os.unlink(tmp)
+    return True
+
+
+def build(paks, out, opts):
+    maps = [m.strip().lower() for m in opts.get('map', 'mp/ffa3').split(',') if m.strip()]
+    mobile = opts.get('profile', 'desktop') == 'mobile'
+    with ExitStack() as stack:
+        zips = {pak: stack.enter_context(zipfile.ZipFile(pak)) for pak in paks}
+
+        def read(n):
+            pak, orig = chosen[n]
+            return zips[pak].read(orig)
+
+        chosen = {}  # lowercase name -> (pak, original name); later paks win
+        for pak in paks:
+            for info in zips[pak].infolist():
+                if keep(info.filename, maps, None):  # music is filtered below, once the bsps are known
+                    chosen[info.filename.lower()] = (pak, info.filename)
+        missing = [m for m in maps if 'maps/' + m + '.bsp' not in chosen]
+        if missing:
+            sys.exit('maps not found: ' + ', '.join(missing))
+        bsps = [read('maps/' + m + '.bsp') for m in maps]
+
+        # music folders: MP menu music, the folder of every map's worldspawn "music" track, music=
+        music = {'music/mp/'} | {d.strip().lower().rstrip('/') + '/' for d in opts.get('music', '').split(',') if d.strip()}
+        for bsp in bsps:
+            m = re.search(r'"music"\s+"([^"]+)"', entities(bsp).split('}', 1)[0], re.I)
+            if m:
+                for track in m.group(1).lower().replace('\\', '/').split():  # "<intro> <loop>"
+                    music.add(os.path.dirname(track) + '/')
+        if mobile and opts.get('nomusic') == '1':
+            music = set()
+        for n in list(chosen):
+            if not keep(n, maps, music):
+                del chosen[n]
+
+        need = needed_stems(read, set(chosen), maps)
+        ambience = needed_ambience(read, set(chosen), bsps) if mobile else None
+        for n in list(chosen):
+            parts = n.split('/')
+            if n.startswith(FILTERED) and stem(n) not in need:
+                del chosen[n]
+            elif mobile and (n.startswith(MOBILE_DROP)
+                             or (n.startswith('sound/ambience/') and os.path.splitext(n)[0] not in ambience)
+                             or (parts[:2] == ['sound', 'chars'] and len(parts) == 4)):
+                del chosen[n]
+
+        tmp = out + '.tmp'
+        total = 0
+        taken = set(chosen)
+        with zipfile.ZipFile(tmp, 'w', zipfile.ZIP_DEFLATED, compresslevel=6) as dst:
+            for pak in paks:
+                for info in zips[pak].infolist():
+                    if chosen.get(info.filename.lower()) != (pak, info.filename):
+                        continue
+                    name, data = info.filename, zips[pak].read(info)
+                    low = name.lower()
+                    if mobile and low.endswith(IMAGE_EXT) and not low.startswith(('fonts/', 'maps/')):
+                        name, data = shrink_image(name, data, taken)
+                    elif mobile and low.endswith('.wav'):
+                        data = shrink_wav(data)
+                    # already-compressed formats are stored as-is
+                    method = zipfile.ZIP_STORED if name.lower().endswith(('.jpg', '.mp3', '.png', '.roq')) else zipfile.ZIP_DEFLATED
+                    zi = zipfile.ZipInfo(name, date_time=info.date_time)
+                    zi.compress_type = method
+                    dst.writestr(zi, data)
+                    total += 1
+            # The engine lists subdirectories of a pk3 only from explicit directory entries
+            # (FS_GetFileList(path, "/"), e.g. models/players/ for the UI's character lists).
+            # keep() skips the originals, so write one for every directory that still holds files.
+            dirs = {}
+            for _, orig in chosen.values():
+                for i, c in enumerate(orig):
+                    if c == '/':
+                        dirs.setdefault(orig[:i + 1].lower(), orig[:i + 1])
+            for d in sorted(dirs.values()):
+                dst.writestr(zipfile.ZipInfo(d), b'')
+        os.replace(tmp, out)
+        print(f'{out}: {total} files, {os.path.getsize(out) / 1e6:.0f} MB')
+
+
 def main():
     src, out = sys.argv[1], sys.argv[2]
     opts = dict(a.split('=', 1) for a in sys.argv[3:])
-    maps = [m.strip().lower() for m in opts.get('map', 'mp/ffa3').split(',') if m.strip()]
-    mobile = opts.get('profile', 'desktop') == 'mobile'
-
-    def pk3s(d):
-        # the engine loads a directory's pk3s in name order, later ones override earlier ones
-        return [os.path.join(d, f) for f in sorted(os.listdir(d), key=str.lower)
-                if f.lower().endswith('.pk3') and not f.lower().startswith(CODE_PK3)]
-    paks = pk3s(src) + (pk3s(opts['mod']) if opts.get('mod') and os.path.isdir(opts['mod']) else [])
-    zips = {pak: zipfile.ZipFile(pak) for pak in paks}
-
-    def read(n):
-        pak, orig = chosen[n]
-        return zips[pak].read(orig)
-
-    chosen = {}  # lowercase name -> (pak, original name); later paks win
-    for pak in paks:
-        for info in zips[pak].infolist():
-            if keep(info.filename, maps, None):  # music is filtered below, once the bsps are known
-                chosen[info.filename.lower()] = (pak, info.filename)
-    missing = [m for m in maps if 'maps/' + m + '.bsp' not in chosen]
-    if missing:
-        sys.exit('maps not found: ' + ', '.join(missing))
-    bsps = [read('maps/' + m + '.bsp') for m in maps]
-
-    # music folders: MP menu music, the folder of every map's worldspawn "music" track, music=
-    music = {'music/mp/'} | {d.strip().lower().rstrip('/') + '/' for d in opts.get('music', '').split(',') if d.strip()}
-    for bsp in bsps:
-        m = re.search(r'"music"\s+"([^"]+)"', entities(bsp).split('}', 1)[0], re.I)
-        if m:
-            for track in m.group(1).lower().replace('\\', '/').split():  # "<intro> <loop>"
-                music.add(os.path.dirname(track) + '/')
-    if mobile and opts.get('nomusic') == '1':
-        music = set()
-    for n in list(chosen):
-        if not keep(n, maps, music):
-            del chosen[n]
-
-    need = needed_stems(read, set(chosen), maps)
-    ambience = needed_ambience(read, set(chosen), bsps) if mobile else None
-    for n in list(chosen):
-        parts = n.split('/')
-        if n.startswith(FILTERED) and stem(n) not in need:
-            del chosen[n]
-        elif mobile and (n.startswith(MOBILE_DROP)
-                         or (n.startswith('sound/ambience/') and os.path.splitext(n)[0] not in ambience)
-                         or (parts[:2] == ['sound', 'chars'] and len(parts) == 4)):
-            del chosen[n]
-
-    tmp = out + '.tmp'
-    total = 0
-    taken = set(chosen)
-    with zipfile.ZipFile(tmp, 'w', zipfile.ZIP_DEFLATED, compresslevel=6) as dst:
-        for pak in paks:
-            for info in zips[pak].infolist():
-                if chosen.get(info.filename.lower()) != (pak, info.filename):
-                    continue
-                name, data = info.filename, zips[pak].read(info)
-                low = name.lower()
-                if mobile and low.endswith(IMAGE_EXT) and not low.startswith(('fonts/', 'maps/')):
-                    name, data = shrink_image(name, data, taken)
-                elif mobile and low.endswith('.wav'):
-                    data = shrink_wav(data)
-                # already-compressed formats are stored as-is
-                method = zipfile.ZIP_STORED if name.lower().endswith(('.jpg', '.mp3', '.png', '.roq')) else zipfile.ZIP_DEFLATED
-                zi = zipfile.ZipInfo(name, date_time=info.date_time)
-                zi.compress_type = method
-                dst.writestr(zi, data)
-                total += 1
-        # The engine lists subdirectories of a pk3 only from explicit directory entries
-        # (FS_GetFileList(path, "/"), e.g. models/players/ for the UI's character lists).
-        # keep() skips the originals, so write one for every directory that still holds files.
-        dirs = {}
-        for _, orig in chosen.values():
-            for i, c in enumerate(orig):
-                if c == '/':
-                    dirs.setdefault(orig[:i + 1].lower(), orig[:i + 1])
-        for d in sorted(dirs.values()):
-            dst.writestr(zipfile.ZipInfo(d), b'')
-    os.replace(tmp, out)
-    print(f'{out}: {total} files, {os.path.getsize(out) / 1e6:.0f} MB')
+    ensure_current(src, out, opts)
 
 
 if __name__ == '__main__':
